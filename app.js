@@ -43,6 +43,39 @@ let lastChoice = null; // ③で表示するため、②で選んだ答え
 
 const app = document.getElementById("app");
 
+// ---- 背景の名画（10/31 フェーズ6-3。一覧は data/backgrounds.js） ----------
+const bgLayer = document.getElementById("bg");
+let currentBg = null;  // いま背景にしている絵
+let viewArt = false;   // 「絵を見る」中か（カードを隠して絵だけを見せる）
+
+// クイズを始めるたび・区分選択に戻るたびに、前と違う絵をランダムに選ぶ
+function pickBackground() {
+  if (!bgLayer || typeof BACKGROUNDS === "undefined" || BACKGROUNDS.length === 0) return;
+  let b;
+  do { b = BACKGROUNDS[Math.floor(Math.random() * BACKGROUNDS.length)]; }
+  while (BACKGROUNDS.length > 1 && b === currentBg);
+  currentBg = b;
+  bgLayer.style.backgroundImage = `url("${b.file}")`;
+  bgLayer.classList.remove("fade");
+  void bgLayer.offsetWidth; // 動きを最初からやり直すため（クラスを付け直しても動かないことがある）
+  bgLayer.classList.add("fade");
+}
+
+// 画面のいちばん下の「背景: 作者『作品名』」。作品ページへのリンクつき
+function bgCredit() {
+  if (!currentBg) return el("span");
+  return el("p", { class: "bg-credit" }, [
+    el("span", { text: "背景: " }),
+    el("a", { href: currentBg.url, target: "_blank", rel: "noopener noreferrer", text: `${currentBg.artist}『${currentBg.title}』（${currentBg.date}）` }),
+    el("span", { text: "　メトロポリタン美術館（CC0）" }),
+  ]);
+}
+
+function setViewArt(on) {
+  viewArt = on;
+  document.body.classList.toggle("view-art", on);
+}
+
 // ---- 効果音（Web Audio API で、その場で音を合成する。音声ファイルは使わない） ----
 // 理由: 他のアプリの音を使うと著作権の問題になりうる。合成すればファイルも要らず、すべて自作になる
 const SOUND_KEY = "artquiz.sound";
@@ -140,6 +173,7 @@ function startQuiz(eraId) {
   streak = 0;
   history = [];
   state = "question";
+  pickBackground();
   render();
 }
 
@@ -170,6 +204,7 @@ function next() {
 
 function quit() {
   state = "select";
+  pickBackground();
   render();
 }
 
@@ -178,6 +213,7 @@ function quit() {
 function render() {
   app.replaceChildren();
   window.scrollTo(0, 0);
+  setViewArt(false); // 画面が変わったら「絵を見る」は終わり
   app.appendChild(topbar());
   switch (state) {
     case "select": renderSelect(); break;
@@ -187,25 +223,43 @@ function render() {
     default: // 想定外の状態（Verilogの default と同じ考え方）
       app.appendChild(el("p", { text: "エラー: 想定外の状態です。ページを読み込み直してください。" }));
   }
+  app.appendChild(bgCredit());
 }
 
-// 上の帯: アプリ名と音のオン・オフ（どの画面でも同じ場所）
+// アイコンと文字のボタン。狭い画面では文字を隠してアイコンだけにする（CSS の .label）。読み上げには文字が届く
+function setIconLabel(button, icon, label) {
+  button.replaceChildren(el("span", { "aria-hidden": "true", text: icon }), el("span", { class: "label", text: label }));
+}
+
+// 上の帯: アプリ名・絵を見る・音のオン・オフ（どの画面でも同じ場所）
 function topbar() {
   const button = el("button", {
     class: "icon-button",
     "aria-pressed": String(soundOn),
     onclick: () => {
       setSound(!soundOn);
-      button.textContent = soundOn ? "🔊 音あり" : "🔇 音なし";
+      setIconLabel(button, soundOn ? "🔊" : "🔇", soundOn ? "音あり" : "音なし");
       button.setAttribute("aria-pressed", String(soundOn));
       if (soundOn) SOUNDS.correct(); // オンにしたら1回鳴らして知らせる
     },
-    text: soundOn ? "🔊 音あり" : "🔇 音なし",
   });
+  setIconLabel(button, soundOn ? "🔊" : "🔇", soundOn ? "音あり" : "音なし");
   // 選択画面は大きな題字があるので、帯のアプリ名は出さない（同じ名前が2つ並ぶため）
   const brand = state === "select" ? el("span") :
     el("p", { class: "brand" }, [el("span", { class: "mark", "aria-hidden": "true", text: "◆" }), el("span", { text: "美術史クイズ" })]);
-  return el("div", { class: "topbar" }, [brand, button]);
+  // 「絵を見る」: カードを隠して背景の絵だけを見る。もう一度押すと戻る
+  const art = el("button", {
+    class: "icon-button",
+    "aria-pressed": "false",
+    onclick: () => {
+      setViewArt(!viewArt);
+      setIconLabel(art, viewArt ? "✕" : "🖼", viewArt ? "戻る" : "絵を見る");
+      art.setAttribute("aria-pressed", String(viewArt));
+    },
+  });
+  setIconLabel(art, "🖼", "絵を見る");
+  const tools = el("div", { class: "tools" }, currentBg ? [art, button] : [button]);
+  return el("div", { class: "topbar" }, [brand, tools]);
 }
 
 function menuButton(label, count, onclick) {
@@ -248,6 +302,7 @@ function renderSelect() {
     "出典にしている美術館などとは関係のない、個人が作ったアプリです。",
     "音のオン・オフの設定だけを、この端末のブラウザに保存します。名前・成績などの情報は、保存も送信もしません。",
     "画面の作りは、デジタル庁デザインシステムのガイドライン（https://design.digital.go.jp/dads/）を参考にしました。効果音はこのアプリのために合成したものです。",
+    "背景の絵は、メトロポリタン美術館のオープンアクセス（CC0。著作権の切れた作品の画像を誰でも使える仕組み）の画像を、小さくして使っています。作品名は画面の下に出します。",
   ];
   app.appendChild(el("details", { class: "about" }, [
     el("summary", { text: "このアプリについて" }),
@@ -398,5 +453,6 @@ function confetti() {
 if (typeof QUESTIONS === "undefined" || !Array.isArray(QUESTIONS)) {
   app.replaceChildren(el("p", { text: "問題データ（data/questions.js）を読み込めませんでした。" }));
 } else {
+  pickBackground();
   render();
 }

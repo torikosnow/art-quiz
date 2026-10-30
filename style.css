@@ -18,6 +18,8 @@
   --wrong: #a3261d;
   --wrong-bg: #fbe9e7;
   --shadow: 0 2px 0 #ddd5c8;
+  --glass: rgba(255, 255, 255, 0.93);   /* 名画の上に置くカードの地（ほぼ不透明。文字の読みやすさを守る） */
+  --veil: rgba(247, 243, 236, 0.35);    /* 名画の上に薄くかける幕 */
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -35,6 +37,8 @@
     --wrong: #ff9b90;
     --wrong-bg: #3c1d1a;
     --shadow: 0 2px 0 #0d0c10;
+    --glass: rgba(35, 33, 40, 0.93);
+    --veil: rgba(23, 21, 26, 0.45);
   }
 }
 
@@ -48,13 +52,47 @@ body {
   font-size: 16px;
   line-height: 1.7;
   letter-spacing: 0.02em;
+  overflow-x: clip; /* 背景の絵がゆっくり寄るとき、横にはみ出してもスクロールさせない（hidden だと下に貼りつくボタンが効かなくなる） */
 }
 
 main {
+  position: relative; /* 背景の名画より手前に出す */
   max-width: 640px;
   margin: 0 auto;
   padding: 16px 16px 48px;
 }
+
+/* ---- 背景の名画（10/31）: 画面いっぱいに固定し、薄い幕をかける ---- */
+#bg {
+  position: fixed;
+  inset: 0;
+  background-color: var(--bg);
+  background-size: cover;
+  background-position: center;
+}
+#bg::after { content: ""; position: absolute; inset: 0; background: var(--veil); }
+
+/* 名画の上に直接のる文字は、読みやすいように地の板を敷く */
+.hero p, .section-title, .review-title, .menu + .muted, .counter, .about, .bg-credit {
+  background: var(--glass);
+  border-radius: 12px;
+}
+.hero p { display: inline-block; padding: 6px 14px; }
+.section-title, .review-title { display: inline-block; padding: 4px 14px; }
+.menu + .muted { padding: 8px 12px; margin-top: 10px; }
+.counter { padding: 2px 10px; }
+.about { padding: 4px 14px; }
+
+/* 下の「背景: 作者『作品名』」 */
+.bg-credit { font-size: 14px; color: var(--muted); padding: 8px 12px; margin: 24px 0 0; }
+.bg-credit a { color: var(--accent); text-underline-offset: 3px; }
+
+/* 「絵を見る」中は、上の帯と作品名だけを残してカードを隠す */
+body.view-art #app > :not(.topbar):not(.bg-credit) { visibility: hidden; }
+body.view-art #bg::after { background: transparent; }
+/* 絵を見るときは切り取らずに全体を見せる（スマホの縦長画面だと、いっぱいに広げると左右が切れるため） */
+body.view-art #bg { background-size: contain; background-repeat: no-repeat; background-color: #111; animation: none; transform: none; }
+body.view-art .bg-credit { position: fixed; left: 16px; right: 16px; bottom: 16px; max-width: 608px; margin: 0 auto; }
 
 h1, h2, h3 { line-height: 1.4; letter-spacing: 0.01em; }
 p { margin: 0 0 12px; }
@@ -69,7 +107,17 @@ p { margin: 0 0 12px; }
   gap: 12px;
   margin-bottom: 8px;
 }
-.brand { font-weight: 700; font-size: 18px; margin: 0; }
+.brand { font-weight: 700; font-size: 18px; margin: 0; background: var(--glass); border-radius: 12px; padding: 4px 12px; }
+.brand { white-space: nowrap; }
+.tools { display: flex; gap: 8px; }
+.icon-button { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; min-width: 48px; justify-content: center; }
+/* 狭い画面ではボタンの文字を目に見えなくする（読み上げには残す） */
+@media (max-width: 420px) {
+  .icon-button .label {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+}
 .brand .mark { color: var(--gold); margin-right: 6px; }
 
 /* ---- タイトル画面の見出し ---- */
@@ -91,7 +139,9 @@ p { margin: 0 0 12px; }
 
 /* ---- カード ---- */
 .card {
-  background: var(--card);
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 20px;
@@ -132,8 +182,8 @@ button:focus-visible, a:focus-visible, summary:focus-visible {
 }
 /* 中断（やめる）: 下線つきの文字ボタン */
 .tertiary {
-  padding: 12px 4px;
-  background: transparent;
+  padding: 12px 14px;
+  background: var(--glass); /* 名画の上でも読めるように */
   color: var(--muted);
   border: none;
   text-decoration: underline;
@@ -296,7 +346,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible {
 /* 全問の見返し: 1問ずつ枠で区切り、左の太い線と見出しで正誤を示す（色だけでなく文字でも） */
 .review-title { font-size: 20px; margin: 32px 0 8px; }
 .review-item {
-  background: var(--card);
+  background: var(--glass);
   border: 1px solid var(--border);
   border-left: 6px solid var(--border);
   border-radius: 12px;
@@ -334,11 +384,14 @@ button:focus-visible, a:focus-visible, summary:focus-visible {
 
 /* ---- 動き（動きを減らす設定の人には出さない） ---- */
 @media (prefers-reduced-motion: no-preference) {
+  #bg.fade { animation: bgin 0.8s ease-out, drift 40s ease-in-out 0.8s infinite alternate; } /* 絵が替わるとき浮かび、ゆっくり寄る */
   .pop { animation: pop 0.35s ease-out; }
   .shake { animation: shake 0.4s ease-in-out; }
   .rise { animation: rise 0.3s ease-out; }
   .bounce { animation: bounce 0.9s ease-out; }
 }
+@keyframes bgin { from { opacity: 0; } to { opacity: 1; } }
+@keyframes drift { from { transform: scale(1); } to { transform: scale(1.08); } }
 @keyframes pop { 0% { transform: scale(0.9); } 60% { transform: scale(1.04); } 100% { transform: scale(1); } }
 @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
 @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
