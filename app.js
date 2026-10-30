@@ -208,12 +208,31 @@ function quit() {
   render();
 }
 
+// 「やめる」: 1問でも答えていたら、消えてよいかを先に聞く（10/31 押し間違いで答えが全部消える弱点への対策）
+function askQuit() {
+  if (history.length === 0 || state === "result") { quit(); return; }
+  const keep = el("button", { class: "primary", onclick: () => box.remove(), text: "続ける" });
+  const box = el("div", { class: "dialog-backdrop" }, [
+    el("div", { class: "dialog", role: "alertdialog", "aria-modal": "true", "aria-labelledby": "quit-title" }, [
+      el("h2", { id: "quit-title", text: "クイズをやめますか？" }),
+      el("p", { text: `ここまでの答え（${history.length}問）は消えます。` }),
+      el("div", { class: "row" }, [
+        el("button", { class: "secondary", onclick: quit, text: "やめる" }),
+        keep,
+      ]),
+    ]),
+  ]);
+  app.appendChild(box);
+  keep.focus(); // 間違って Enter を押しても、続ける方になるように
+}
+
 // ---- 画面（状態ごとの出力） -----------------------------------------
 
 function render() {
   app.replaceChildren();
   window.scrollTo(0, 0);
   setViewArt(false); // 画面が変わったら「絵を見る」は終わり
+  document.body.dataset.state = state; // 出題中は背景を控えめにする（CSS）
   app.appendChild(topbar());
   switch (state) {
     case "select": renderSelect(); break;
@@ -226,7 +245,7 @@ function render() {
   app.appendChild(bgCredit());
 }
 
-// アイコンと文字のボタン。狭い画面では文字を隠してアイコンだけにする（CSS の .label）。読み上げには文字が届く
+// アイコンと文字のボタン（10/31 アイコンだけだと意味が伝わりにくいので、文字はいつも出す）
 function setIconLabel(button, icon, label) {
   button.replaceChildren(el("span", { "aria-hidden": "true", text: icon }), el("span", { class: "label", text: label }));
 }
@@ -240,6 +259,8 @@ function topbar() {
       setSound(!soundOn);
       setIconLabel(button, soundOn ? "🔊" : "🔇", soundOn ? "音あり" : "音なし");
       button.setAttribute("aria-pressed", String(soundOn));
+      const note = app.querySelector(".sound-note");
+      if (note) note.textContent = soundNote();
       if (soundOn) SOUNDS.correct(); // オンにしたら1回鳴らして知らせる
     },
   });
@@ -269,27 +290,49 @@ function menuButton(label, count, onclick) {
   ]);
 }
 
+let selectTab = "era"; // 選択画面のタブ（"era" 時代 / "genre" ジャンル）
+
+function soundNote() {
+  return soundOn ? "♪ 正解・不正解で効果音が鳴ります。右上の「音あり」で消せます。"
+    : "♪ いまは音なしです。右上の「音なし」を押すと効果音が鳴ります。";
+}
+
 function renderSelect() {
+  // 10/31: 初めての人が迷わないよう、主ボタン「すぐに始める」を1つだけ置く（デジタル庁: 主ボタンは1画面に1つ）
   app.appendChild(el("div", { class: "hero" }, [
     el("div", { class: "frame" }, [el("h1", { text: "美術史クイズ" })]),
-    el("p", { text: "時代やジャンルを選んで、4択で答えよう。1回10問、1問ごとに解説と出典つき。" }),
+    el("p", { text: "4択で答える美術史のクイズ。1回10問、1問ごとに解説と出典つき。" }),
+    el("div", { class: "start" }, [
+      el("button", { class: "primary big", onclick: () => startQuiz(ALL), text: "すぐに始める" }),
+      el("p", { class: "start-note", text: "全時代からランダムに10問" }),
+    ]),
+    // 音が鳴ることを先に知らせる（電車の中などで驚かないように）
+    el("p", { class: "sound-note", text: soundNote() }),
   ]));
 
-  app.appendChild(el("h2", { class: "section-title", text: "時代で選ぶ" }));
-  const eraMenu = el("div", { class: "menu" });
-  for (const e of [...ERAS, { id: ALL, label: "全時代ミックス" }]) {
-    const count = questionsOf(e.id).length;
-    if (count === 0) continue; // 0問の区分はボタンを出さない（設計3）
-    eraMenu.appendChild(menuButton(e.label, count, () => startQuiz(e.id)));
-  }
-  app.appendChild(eraMenu);
-  app.appendChild(el("p", { class: "muted small", text: "時代区分は、国立西洋美術館の作品紹介の分け方を参考にしました。" }));
-
-  // ジャンルで選ぶ（出典で様式などが確かめられた問題だけが入る）
+  // 選んで始める: 時代とジャンルをタブで切り替える（22個のボタンが一度に並ぶと選びにくいため）
+  app.appendChild(el("h2", { class: "section-title", text: "選んで始める" }));
   const genres = GENRES.filter(g => questionsOf(GENRE_KEY + g).length >= GENRE_MIN);
-  if (genres.length > 0) {
-    app.appendChild(el("h2", { class: "section-title", text: "ジャンルで選ぶ" }));
-    const genreMenu = el("div", { class: "menu genres" });
+  const tabs = [["era", "時代で選ぶ"], ["genre", "ジャンルで選ぶ"]];
+  app.appendChild(el("div", { class: "tabs", role: "tablist" }, tabs.map(([id, label]) =>
+    el("button", {
+      class: "tab", role: "tab", "aria-selected": String(selectTab === id),
+      onclick: () => { selectTab = id; render(); },
+      text: label,
+    }))));
+
+  if (selectTab === "era") {
+    const eraMenu = el("div", { class: "menu", role: "tabpanel" });
+    for (const e of [...ERAS, { id: ALL, label: "全時代ミックス" }]) {
+      const count = questionsOf(e.id).length;
+      if (count === 0) continue; // 0問の区分はボタンを出さない（設計3）
+      eraMenu.appendChild(menuButton(e.label, count, () => startQuiz(e.id)));
+    }
+    app.appendChild(eraMenu);
+    app.appendChild(el("p", { class: "muted small", text: "時代区分は、国立西洋美術館の作品紹介の分け方を参考にしました。" }));
+  } else {
+    // ジャンルで選ぶ（出典で様式などが確かめられた問題だけが入る）
+    const genreMenu = el("div", { class: "menu genres", role: "tabpanel" });
     for (const g of genres) genreMenu.appendChild(menuButton(g, questionsOf(GENRE_KEY + g).length, () => startQuiz(GENRE_KEY + g)));
     app.appendChild(genreMenu);
     app.appendChild(el("p", { class: "muted small", text: "ジャンルは、出典の美術館などのページで確かめられた問題にだけ付けています。" }));
@@ -318,7 +361,9 @@ function renderQuestion() {
 
   // 進み具合（③では今の問題も終わった分として数える）
   const done = index + (answered ? 1 : 0);
+  // 「やめる」は上に置く（10/31 下の「次へ」の隣だと押し間違えやすかったため）
   app.appendChild(el("div", { class: "quiz-head" }, [
+    el("button", { class: "tertiary small-button", onclick: askQuit, text: "やめる" }),
     el("div", {
       class: "progress", role: "progressbar", "aria-label": "進み具合",
       "aria-valuemin": "0", "aria-valuemax": String(quiz.length), "aria-valuenow": String(done),
@@ -351,10 +396,12 @@ function renderQuestion() {
   app.appendChild(card);
 
   const isLast = index + 1 >= quiz.length;
-  // 答えたあとは「次へ」を画面の下に貼りつける（長い解説を読んでいる途中でもすぐ押せるように）
-  const row = el("div", { class: "row" + (answered ? " sticky" : "") }, [el("button", { class: "tertiary", onclick: quit, text: "やめる" })]);
-  if (answered) row.appendChild(el("button", { class: "primary", onclick: next, text: isLast ? "結果を見る" : "次へ" }));
-  app.appendChild(row);
+  // 答えたあとは「次へ」だけを画面の下に貼りつける（長い解説を読んでいる途中でもすぐ押せるように）
+  if (answered) {
+    app.appendChild(el("div", { class: "row sticky" }, [
+      el("button", { class: "primary", onclick: next, text: isLast ? "結果を見る" : "次へ" }),
+    ]));
+  }
 
   // 答えたら、解説のパネルが見えるところまで動かす（スマホでは下に隠れるため）
   if (answered) {
