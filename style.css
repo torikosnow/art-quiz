@@ -1,0 +1,109 @@
+/* 色はここにまとめる（あとで変えやすいように） */
+:root {
+  --bg: #faf7f2;
+  --card: #ffffff;
+  --text: #2b2622;
+  --muted: #6f655c;
+  --accent: #8a3b2e;
+  --border: #e3dbd0;
+  --correct: #2f6b3a;
+  --wrong: #a2352b;
+  --on-accent: #ffffff; /* 主ボタンの文字色（地の色 --accent の上で読める色） */
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1d1a17;
+    --card: #282420;
+    --text: #efe8de;
+    --muted: #a99d90;
+    --accent: #e08a72;
+    --border: #3d3731;
+    --correct: #7fc28b;
+    --wrong: #f08a7e;
+    --on-accent: #1d1a17; /* 明るい地には暗い文字（白だと読みにくい） */
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+  line-height: 1.7;
+}
+
+main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+h1 { font-size: 1.6rem; margin: 0 0 4px; }
+h2 { font-size: 1.15rem; margin: 0 0 16px; }
+h2.section { margin: 32px 0 0; } /* 選択画面の「ジャンルで選ぶ」見出し */
+.muted { color: var(--muted); font-size: 0.9rem; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 16px 0;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 10px;
+  min-height: 44px; /* スマホで指で押しやすい大きさ */
+}
+/* キーボードで操作したとき、いまどこにいるかを見せる */
+button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* 区分ボタン・選択肢ボタン */
+.choice {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  margin: 8px 0;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+/* マウスのある機器だけ。スマホでは押したあとも枠が残り、次の問題で選ばれているように見えるため */
+@media (hover: hover) {
+  .choice:hover:not(:disabled) { border-color: var(--accent); }
+}
+.choice:disabled { cursor: default; }
+.choice .count { flex-shrink: 0; color: var(--muted); } /* 長い区分名でも「◯問」がつぶれない */
+
+/* 「次へ」などの主ボタン */
+.primary {
+  padding: 10px 24px;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+}
+.secondary {
+  padding: 10px 16px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.row { display: flex; gap: 8px; justify-content: space-between; align-items: center; margin-top: 16px; }
+
+.result-correct { color: var(--correct); font-weight: bold; font-size: 1.2rem; }
+.result-wrong { color: var(--wrong); font-weight: bold; font-size: 1.2rem; }
+
+.sources { font-size: 0.85rem; color: var(--muted); padding-left: 1.2em; }
+.sources a { color: var(--accent); word-break: break-all; }
+
+.about { margin-top: 32px; } /* 選択画面のいちばん下の「このアプリについて」 */
+.about summary { cursor: pointer; color: var(--muted); }
+.mistake { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 12px; }
