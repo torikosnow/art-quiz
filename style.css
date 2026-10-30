@@ -293,9 +293,39 @@ button:focus-visible, a:focus-visible, summary:focus-visible {
 .score small { font-size: 20px; color: var(--muted); font-weight: 400; }
 .result.tier-3 { border: 3px double var(--gold); }
 .result.tier-3 .score { color: var(--correct); }
-.mistakes-title { font-size: 20px; margin: 24px 0 8px; }
-.mistake { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 12px; }
-.mistake p { margin: 0 0 4px; }
+/* 全問の見返し: 1問ずつ枠で区切り、左の太い線と見出しで正誤を示す（色だけでなく文字でも） */
+.review-title { font-size: 20px; margin: 32px 0 8px; }
+.review-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 6px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 12px 0;
+}
+.review-item.ok { border-left-color: var(--correct); }
+.review-item.ng { border-left-color: var(--wrong); }
+.review-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.review-no { font-weight: 700; font-size: 14px; color: var(--muted); }
+.review-verdict { font-weight: 700; font-size: 14px; border-radius: 999px; padding: 2px 12px; }
+.review-item.ok .review-verdict { color: var(--correct); background: var(--correct-bg); }
+.review-item.ng .review-verdict { color: var(--wrong); background: var(--wrong-bg); }
+.review-question { font-weight: 700; margin: 0 0 8px; }
+.review-answers {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 12px;
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+.review-answers dt { color: var(--muted); font-size: 14px; }
+.review-answers dd { margin: 0; }
+.review-answers dd.right { color: var(--correct); font-weight: 700; }
+.review-more { margin-top: 8px; }
+.review-more summary { cursor: pointer; color: var(--accent); min-height: 44px; display: flex; align-items: center; }
+.review-more p { margin: 4px 0 0; }
 
 /* ---- このアプリについて ---- */
 .about { margin-top: 32px; }

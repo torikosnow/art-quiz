@@ -38,7 +38,7 @@ let quiz = [];         // 出題するN問（選択肢は並べ替え済み）
 let index = 0;         // 今何問目か（0から数える）
 let score = 0;         // 正解数
 let streak = 0;        // 連続正解の数
-let mistakes = [];     // 間違えた問題と選んだ答え
+let history = [];      // 解いた問題と選んだ答え（結果画面で全問を見返すため。10/31 間違いだけ→全問に）
 let lastChoice = null; // ③で表示するため、②で選んだ答え
 
 const app = document.getElementById("app");
@@ -82,7 +82,7 @@ function play(notes, type = "triangle", volume = 0.18) {
 }
 
 const SOUNDS = {
-  correct: () => play([[880, 0, 0.12], [1318.5, 0.1, 0.28]]),                        // ピコン（上がる2音）
+  correct: () => play([[1318.5, 0, 0.22], [1046.5, 0.2, 0.9]], "sine", 0.22),         // ピンポーン（高いピン→少し低いポーンを長く。10/31 学習者の希望）
   wrong: () => play([[311, 0, 0.18], [233, 0.16, 0.3]], "sine", 0.2),                 // ポワン（下がる2音・やわらかく）
   tier3: () => play([[523, 0, 0.14], [659, 0.12, 0.14], [784, 0.24, 0.14], [1047, 0.36, 0.5], [1319, 0.36, 0.5]]), // ファンファーレ
   tier2: () => play([[392, 0, 0.16], [523, 0.15, 0.16], [659, 0.3, 0.4]]),            // 明るい3音
@@ -138,7 +138,7 @@ function startQuiz(eraId) {
   index = 0;
   score = 0;
   streak = 0;
-  mistakes = [];
+  history = [];
   state = "question";
   render();
 }
@@ -147,13 +147,14 @@ function choose(choice) {
   if (state !== "question") return; // 2回押し対策: ②以外では受け付けない
   const q = quiz[index];
   lastChoice = choice;
-  if (choice === q.answer) {
+  const ok = choice === q.answer;
+  history.push({ q, yours: choice, ok });
+  if (ok) {
     score++;
     streak++;
     SOUNDS.correct();
   } else {
     streak = 0;
-    mistakes.push({ question: q.question, yours: choice, correct: q.answer });
     SOUNDS.wrong();
   }
   state = "answer";
@@ -342,23 +343,38 @@ function renderResult() {
     el("p", { text: tier.text }),
   ]);
   app.appendChild(card);
-
-  if (mistakes.length > 0) {
-    const list = el("div", { class: "card" }, [el("h2", { class: "mistakes-title", text: "間違えた問題" })]);
-    for (const m of mistakes) {
-      list.appendChild(el("div", { class: "mistake" }, [
-        el("p", { text: m.question }),
-        el("p", { class: "muted", text: `あなたの答え: ${m.yours}` }),
-        el("p", { text: `正しい答え: ${m.correct}` }),
-      ]));
-    }
-    app.appendChild(list);
-  }
-
+  // ボタンは見返しの上に置く（10問の見返しの下だと、スクロールしないと押せないため）
   app.appendChild(el("div", { class: "row" }, [
     el("button", { class: "secondary", onclick: quit, text: "区分選択へ" }),
     el("button", { class: "primary", onclick: () => startQuiz(era), text: "もう一度" }),
   ]));
+
+  // 全問の見返し（10/31 学習者の希望）。1問ずつ別の枠にし、番号と「正解／不正解」を見出しに置く
+  // 理由: 区切りがないと、どの答えがどの問題のものか分かりにくかったため
+  app.appendChild(el("h2", { class: "review-title", text: `${quiz.length}問の見返し` }));
+  history.forEach((h, i) => {
+    const item = el("section", { class: "review-item " + (h.ok ? "ok" : "ng") }, [
+      el("div", { class: "review-head" }, [
+        el("span", { class: "review-no", text: `第${i + 1}問` }),
+        el("span", { class: "review-verdict", text: h.ok ? "✓ 正解" : "✕ 不正解" }),
+      ]),
+      el("p", { class: "review-question", text: h.q.question }),
+    ]);
+    const answers = el("dl", { class: "review-answers" }, [
+      el("dt", { text: "あなたの答え" }), el("dd", { text: h.yours }),
+    ]);
+    if (!h.ok) answers.append(el("dt", { text: "正しい答え" }), el("dd", { class: "right", text: h.q.answer }));
+    item.appendChild(answers);
+    // 解説は開いたときだけ（10問分を全部出すと長くなりすぎるため）
+    item.appendChild(el("details", { class: "review-more" }, [
+      el("summary", { text: "解説と出典を見る" }),
+      el("p", { text: h.q.explanation }),
+      el("ul", { class: "sources" }, h.q.sources.map(s => el("li", {}, [
+        el("a", { href: s.url, target: "_blank", rel: "noopener noreferrer", text: s.name }),
+      ]))),
+    ]));
+    app.appendChild(item);
+  });
 
   if (tier.level === 3) confetti();
 }
