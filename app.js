@@ -15,6 +15,7 @@ const ERAS = [
   { id: "c20post", label: "20世紀（第二次大戦後）" },
 ];
 const ALL = "all"; // 全時代ミックス
+const PICTURE = "picture"; // 絵で当てるクイズ（10/31 追加。作品の一覧は data/works.js）
 
 // ジャンル（様式など。10/30 追加）。名前は tools/check_questions.ps1 の一覧と同じ。並びは時代順
 const GENRES = ["ルネサンス", "北方ルネサンス", "マニエリスム", "バロック", "オランダ黄金時代", "ロココ", "新古典主義",
@@ -63,7 +64,7 @@ function pickBackground() {
 
 // 画面のいちばん下の「背景: 作者『作品名』」。作品ページへのリンクつき
 function bgCredit() {
-  if (!currentBg || state === "select" || state === "pick") return el("span"); // 最初の2画面は絵を出さない
+  if (!currentBg || isStartScreen()) return el("span"); // 最初の画面たちは絵を出さない
   return el("p", { class: "bg-credit" }, [
     el("span", { text: "背景: " }),
     el("a", { href: currentBg.url, target: "_blank", rel: "noopener noreferrer", text: `${currentBg.artist}『${currentBg.title}』（${currentBg.date}）` }),
@@ -159,12 +160,75 @@ function tierOf(ratio) {
   return TIERS.find(t => ratio >= t.min);
 }
 
+// ---- 絵で当てるクイズ（10/31） -------------------------------------------
+// 問題は作品の一覧（館の公式データ）から、その場で組み立てる。解説文は書かず、館のデータの事実（作者・題・年・所蔵館）だけを出す
+// 理由: 文章を作らないので出典との照らし合わせが要らず、AIの思い込みが入らない
+function pictureReady() {
+  return typeof WORKS !== "undefined" && typeof ARTISTS !== "undefined" && new Set(WORKS.map(w => w.artist)).size >= 4;
+}
+
+function workLabel(w) {
+  return `${ARTISTS[w.artist].name}『${w.title}』（${w.date}）`;
+}
+
+// 作家の活動した年（その作家の作品の年の真ん中）。誤答に年の近い作家を選ぶため（遠すぎると簡単すぎる）
+function artistYear(key) {
+  const ys = WORKS.filter(w => w.artist === key).map(w => w.year).sort((a, b) => a - b);
+  return ys[Math.floor(ys.length / 2)];
+}
+
+function nearArtists(key, n) {
+  const year = artistYear(key);
+  const others = [...new Set(WORKS.map(w => w.artist))].filter(k => k !== key);
+  others.sort((a, b) => Math.abs(artistYear(a) - year) - Math.abs(artistYear(b) - year));
+  return shuffle(others.slice(0, 8)).slice(0, n); // 近い8人から3人をランダムに（毎回同じ組み合わせにならないように）
+}
+
+function buildPictureQuiz(n) {
+  return shuffle(WORKS).slice(0, n).map(w => {
+    const others = nearArtists(w.artist, 3);
+    const sources = [{ name: `${w.museum}「${w.title}」`, url: w.url, accessed: w.accessed }];
+    if (Math.random() < 0.5) {
+      // 「この絵の作者は？」: 絵を1枚見せて、作者を4人から選ぶ
+      return {
+        kind: "who", image: w.file,
+        question: "この絵を描いたのは誰でしょう？",
+        answer: ARTISTS[w.artist].name,
+        wrongChoices: others.map(k => ARTISTS[k].name),
+        explanation: `${workLabel(w)}。${w.museum}の所蔵作品です。`,
+        sources,
+      };
+    }
+    // 「〇〇の作品はどれ？」: 4枚の絵から選ぶ。ほかの3枚は年の近い別の作家の絵
+    const decoys = others.map(k => shuffle(WORKS.filter(x => x.artist === k))[0]);
+    const all = [w, ...decoys];
+    return {
+      kind: "which",
+      question: `${ARTISTS[w.artist].name}の作品はどれでしょう？`,
+      answer: String(w.id),
+      wrongChoices: decoys.map(d => String(d.id)),
+      images: Object.fromEntries(all.map(x => [String(x.id), x.file])),
+      labels: Object.fromEntries(all.map(x => [String(x.id), workLabel(x)])),
+      captions: Object.fromEntries(all.map(x => [String(x.id), ARTISTS[x.artist].name])), // 答えたあと各絵の下に出す作者名
+      explanation: `正解は${workLabel(w)}。ほかの3枚は、${decoys.map(workLabel).join("、")}です。`,
+      sources,
+    };
+  });
+}
+
+// 答えの表示用の文字（絵を選ぶ問題では、答えの値は作品の番号なので「作者『題』」に直す）
+function labelOf(q, v) {
+  return (q.labels && q.labels[v]) || v;
+}
+
 // ---- 遷移（状態を変えて描き直す） -----------------------------------
 
 function startQuiz(eraId) {
   era = eraId;
-  const n = Math.min(MAX_QUESTIONS, questionsOf(eraId).length);
-  quiz = shuffle(questionsOf(eraId)).slice(0, n).map(q => ({
+  const source = eraId === PICTURE
+    ? buildPictureQuiz(Math.min(MAX_QUESTIONS, WORKS.length))
+    : shuffle(questionsOf(eraId)).slice(0, Math.min(MAX_QUESTIONS, questionsOf(eraId).length));
+  quiz = source.map(q => ({
     ...q,
     choices: shuffle([q.answer, ...q.wrongChoices]),
   }));
@@ -236,6 +300,7 @@ function render() {
   app.appendChild(topbar());
   switch (state) {
     case "select": renderSelect(); break;
+    case "hist": renderHistory(); break;
     case "pick": renderPick(); break;
     case "question":
     case "answer": renderQuestion(); break;
@@ -280,8 +345,8 @@ function topbar() {
     },
   });
   setIconLabel(art, "🖼", "絵を見る");
-  // 最初の2画面は絵を出さないので「絵を見る」も出さない
-  const showsArt = currentBg && state !== "select" && state !== "pick";
+  // 最初の画面たちは絵を出さないので「絵を見る」も出さない
+  const showsArt = currentBg && !isStartScreen();
   const tools = el("div", { class: "tools" }, showsArt ? [art, button] : [button]);
   return el("div", { class: "topbar" }, [brand, tools]);
 }
@@ -305,6 +370,28 @@ function backToSelect() {
   state = "select";
   render();
 }
+// 美術史クイズの入口（時代かジャンルか）。一覧の「もどる」もここへ戻る
+function openHistory() {
+  state = "hist";
+  render();
+}
+// 最初の画面たち（絵の背景を出さない画面）
+function isStartScreen() {
+  return state === "select" || state === "hist" || state === "pick";
+}
+
+// level（「かんたん」など）は題の上の小さな札にする（題に入れるとスマホで途中から折れたため）
+function wayButton(icon, title, sub, onclick, level) {
+  return el("button", { class: "way", onclick }, [
+    el("span", { class: "way-icon", "aria-hidden": "true", text: icon }),
+    el("span", { class: "way-text" }, [
+      ...(level ? [el("span", { class: "way-level", text: level })] : []),
+      el("span", { class: "way-title", text: title }),
+      el("span", { class: "way-sub", text: sub }),
+    ]),
+    el("span", { class: "way-arrow", "aria-hidden": "true", text: "›" }),
+  ]);
+}
 
 function soundNote() {
   return soundOn ? "♪ 正解・不正解で効果音が鳴ります。右上の「音あり」で消せます。"
@@ -315,32 +402,21 @@ function availableGenres() {
   return GENRES.filter(g => questionsOf(GENRE_KEY + g).length >= GENRE_MIN);
 }
 
-// 1段目: 「時代で選ぶ」「ジャンルで選ぶ」の2つだけ（10/31）
+// 1段目: 「絵で当てる（かんたん）」「美術史に挑戦（むずかしい）」の2つだけ
+// 10/31 学習者「美術史は難しい。絵を見て当てる暗記問題が楽しいかも」→ やさしい入口を先に置く
 function renderSelect() {
   app.appendChild(el("div", { class: "hero" }, [
     el("div", { class: "frame" }, [el("h1", { text: "美術史クイズ" })]),
-    el("p", { text: "4択で答える美術史のクイズ。1回10問、1問ごとに解説と出典つき。" }),
+    el("p", { text: "名画を見て当てたり、美術史に挑戦したり。4択で1回10問。" }),
   ]));
 
-  const eraCount = ERAS.filter(e => questionsOf(e.id).length > 0).length;
-  app.appendChild(el("div", { class: "choose-way" }, [
-    el("button", { class: "way", onclick: () => openPick("era") }, [
-      el("span", { class: "way-icon", "aria-hidden": "true", text: "🏛" }),
-      el("span", { class: "way-text" }, [
-        el("span", { class: "way-title", text: "時代で選ぶ" }),
-        el("span", { class: "way-sub", text: `14世紀から第二次大戦後まで ${eraCount}つの時代` }),
-      ]),
-      el("span", { class: "way-arrow", "aria-hidden": "true", text: "›" }),
-    ]),
-    el("button", { class: "way", onclick: () => openPick("genre") }, [
-      el("span", { class: "way-icon", "aria-hidden": "true", text: "🎨" }),
-      el("span", { class: "way-text" }, [
-        el("span", { class: "way-title", text: "ジャンルで選ぶ" }),
-        el("span", { class: "way-sub", text: `印象派・浮世絵など ${availableGenres().length}種類` }),
-      ]),
-      el("span", { class: "way-arrow", "aria-hidden": "true", text: "›" }),
-    ]),
-  ]));
+  const ways = [];
+  if (pictureReady()) {
+    const artistCount = new Set(WORKS.map(w => w.artist)).size;
+    ways.push(wayButton("🖼", "絵で当てる", `名画を見て作者を当てる・作者の絵を選ぶ。${artistCount}人の画家`, () => startQuiz(PICTURE), "かんたん"));
+  }
+  ways.push(wayButton("📚", "美術史に挑戦", "時代やジャンルを選ぶ。1問ごとに解説と出典つき", openHistory, "むずかしい"));
+  app.appendChild(el("div", { class: "choose-way" }, ways));
 
   // 画面の下に、音の注意と「このアプリについて」を同じ形でそろえて置く（10/31 学習者の希望）
   // 音の注意は、電車の中などで驚かないように先に知らせるため
@@ -354,6 +430,7 @@ function renderSelect() {
     "出典にしている美術館などとは関係のない、個人が作ったアプリです。",
     "音のオン・オフの設定だけを、この端末のブラウザに保存します。名前・成績などの情報は、保存も送信もしません。",
     "画面の作りは、デジタル庁デザインシステムのガイドライン（https://design.digital.go.jp/dads/）を参考にしました。効果音はこのアプリのために合成したものです。",
+    "「絵で当てる」の絵・作者・題名・年は、ワシントン・ナショナル・ギャラリーの公開データ（CC0）とオープンアクセスの画像をもとにしています（画像は小さくしています）。題名は館の英語の題のままです（推測で訳さないため）。同館がこのアプリを推薦しているわけではありません。",
     "背景の絵は、メトロポリタン美術館のオープンアクセス（CC0。著作権の切れた作品の画像を誰でも使える仕組み）の画像を、小さくして使っています。作品名は画面の下に出します。",
   ];
   foot.appendChild(el("details", { class: "foot-item about" }, [
@@ -362,10 +439,23 @@ function renderSelect() {
   ]));
 }
 
-// 2段目: 選んだ方の一覧。左上の「もどる」で1段目へ
-function renderPick() {
+// 美術史に挑戦: 「時代で選ぶ」「ジャンルで選ぶ」の2つ（10/31 学習者「まず2つで選び、次で選択肢」）
+function renderHistory() {
   app.appendChild(el("div", { class: "pick-head" }, [
     el("button", { class: "tertiary small-button", onclick: backToSelect, text: "‹ もどる" }),
+    el("h1", { class: "pick-title", text: "美術史に挑戦" }),
+  ]));
+  const eraCount = ERAS.filter(e => questionsOf(e.id).length > 0).length;
+  app.appendChild(el("div", { class: "choose-way" }, [
+    wayButton("🏛", "時代で選ぶ", `14世紀から第二次大戦後まで ${eraCount}つの時代`, () => openPick("era")),
+    wayButton("🎨", "ジャンルで選ぶ", `印象派・浮世絵など ${availableGenres().length}種類`, () => openPick("genre")),
+  ]));
+}
+
+// 一覧（時代かジャンル）。左上の「もどる」で「美術史に挑戦」へ
+function renderPick() {
+  app.appendChild(el("div", { class: "pick-head" }, [
+    el("button", { class: "tertiary small-button", onclick: openHistory, text: "‹ もどる" }),
     el("h1", { class: "pick-title", text: pickType === "era" ? "時代で選ぶ" : "ジャンルで選ぶ" }),
   ]));
 
@@ -406,20 +496,26 @@ function renderQuestion() {
   ]));
   if (streak >= 2) app.appendChild(el("p", { class: "streak" + (ok ? " pop" : ""), text: `★ ${streak}問連続正解！` }));
 
-  const card = el("div", { class: "card" }, [el("h2", { class: "question", text: q.question })]);
-  const list = el("div", { class: "choices" });
+  const card = el("div", { class: "card" });
+  // 「この絵の作者は？」では、問題文の上に絵を大きく出す
+  if (q.image) card.appendChild(el("img", { class: "quiz-image", src: q.image, alt: "出題の絵（作者は答えのあとに出ます）" }));
+  card.appendChild(el("h2", { class: "question", text: q.question }));
+  const list = el("div", { class: "choices" + (q.images ? " pictures" : "") });
   q.choices.forEach((c, i) => {
-    let cls = "choice";
+    let cls = "choice" + (q.images ? " picture-choice" : "");
     let mark = "";
     if (answered) {
       if (c === q.answer) { cls += " is-correct" + (ok ? " pop" : ""); mark = "✓ 正解"; }
       else if (c === lastChoice) { cls += " is-wrong shake"; mark = "✕ あなたの答え"; }
       else cls += " is-dim";
+      // 絵を選ぶ問題は、答えたら4枚すべてに作者名を出す（どの絵が誰の作品かを学べるように）
+      if (q.captions) mark = (mark ? mark.slice(0, 1) + " " : "") + q.captions[c];
     }
-    const b = el("button", { class: cls, "data-choice": c, onclick: () => choose(c) }, [
-      el("span", { class: "key", "aria-hidden": "true", text: "ABCD"[i] }),
-      el("span", { text: c }),
-    ]);
+    // 絵を選ぶ問題は、ボタンの中身が絵。答える前は題名を出さない（答えがわかってしまうため）
+    const body = q.images
+      ? [el("img", { src: q.images[c], alt: `${"ABCD"[i]}の絵`, loading: "lazy" }), el("span", { class: "key", "aria-hidden": "true", text: "ABCD"[i] })]
+      : [el("span", { class: "key", "aria-hidden": "true", text: "ABCD"[i] }), el("span", { text: c })];
+    const b = el("button", { class: cls, "data-choice": c, onclick: () => choose(c) }, body);
     if (mark) b.appendChild(el("span", { class: "mark", text: mark }));
     if (answered) b.disabled = true;
     list.appendChild(b);
@@ -450,9 +546,9 @@ function feedback(q, ok) {
       el("span", { class: "badge", "aria-hidden": "true", text: ok ? "✓" : "✕" }),
       el("span", { text: ok ? "正解！" : "不正解" }),
     ]),
-    el("p", { class: "answer-line", text: `正しい答え: ${q.answer}` }),
+    el("p", { class: "answer-line", text: `正しい答え: ${labelOf(q, q.answer)}` }),
   ]);
-  if (!ok) panel.appendChild(el("p", { text: `あなたの答え: ${lastChoice}` }));
+  if (!ok) panel.appendChild(el("p", { text: `あなたの答え: ${labelOf(q, lastChoice)}` }));
   panel.appendChild(el("p", { class: "explanation", text: q.explanation }));
 
   // 出典（新しいタブで開く。クイズの画面が消えないように）
@@ -497,9 +593,9 @@ function renderResult() {
       el("p", { class: "review-question", text: h.q.question }),
     ]);
     const answers = el("dl", { class: "review-answers" }, [
-      el("dt", { text: "あなたの答え" }), el("dd", { text: h.yours }),
+      el("dt", { text: "あなたの答え" }), el("dd", { text: labelOf(h.q, h.yours) }),
     ]);
-    if (!h.ok) answers.append(el("dt", { text: "正しい答え" }), el("dd", { class: "right", text: h.q.answer }));
+    if (!h.ok) answers.append(el("dt", { text: "正しい答え" }), el("dd", { class: "right", text: labelOf(h.q, h.q.answer) }));
     item.appendChild(answers);
     // 解説は開いたときだけ（10問分を全部出すと長くなりすぎるため）
     item.appendChild(el("details", { class: "review-more" }, [
