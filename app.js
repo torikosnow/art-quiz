@@ -538,7 +538,28 @@ function renderQuestion() {
     const panel = card.querySelector(".feedback");
     if (panel.scrollIntoView) panel.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }
+
+  // 次の問題の絵を先に読み込んでおく（「次へ」を押したときに絵が出るのを待たせないため）
+  const upcoming = quiz[index + 1];
+  if (upcoming) {
+    for (const src of [upcoming.image, ...Object.values(upcoming.images || {})]) {
+      if (src) new Image().src = src;
+    }
+  }
 }
+
+// パソコンのキーボードで答える: A〜D か 1〜4 で選ぶ、Enter で「次へ」（10/31）
+document.addEventListener("keydown", e => {
+  if (e.ctrlKey || e.metaKey || e.altKey || document.querySelector(".dialog")) return;
+  if (state === "question") {
+    const i = "abcd".indexOf(e.key.toLowerCase()) >= 0 ? "abcd".indexOf(e.key.toLowerCase()) : "1234".indexOf(e.key);
+    if (i >= 0 && quiz[index] && quiz[index].choices[i] !== undefined) choose(quiz[index].choices[i]);
+  } else if (state === "answer" && e.key === "Enter") {
+    // ボタンにフォーカスがあるときは、そのボタンの Enter に任せる（二重に進まないように）
+    if (document.activeElement && document.activeElement.tagName === "BUTTON") return;
+    next();
+  }
+});
 
 function feedback(q, ok) {
   const panel = el("div", { class: "feedback rise " + (ok ? "ok" : "ng"), role: "status" }, [
