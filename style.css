@@ -73,6 +73,9 @@ main {
   background-position: center;
 }
 #bg::after { content: ""; position: absolute; inset: 0; background: var(--veil); transition: background 0.4s; }
+/* 最初の2画面（時代かジャンルかを選ぶ・一覧）は絵を出さずシンプルに（10/31 学習者の希望） */
+body[data-state="select"] #bg, body[data-state="pick"] #bg { background-image: none !important; animation: none; transform: none; }
+body[data-state="select"] #bg::after, body[data-state="pick"] #bg::after { background: transparent; }
 /* 問題を解いている間と結果は、絵を控えめにして問題に集中しやすくする（10/31）。タイトルと「絵を見る」では絵をはっきり見せる */
 body[data-state="question"] #bg::after, body[data-state="answer"] #bg::after, body[data-state="result"] #bg::after { background: var(--veil-strong); }
 
@@ -143,7 +146,18 @@ p { margin: 0 0 12px; }
 .way-title { font-size: 22px; font-weight: 700; color: var(--accent); }
 .way-sub { font-size: 14px; color: var(--muted); }
 .way-arrow { font-size: 32px; color: var(--muted); flex-shrink: 0; }
-.sound-note { font-size: 14px; color: var(--muted); background: var(--glass); border-radius: 12px; padding: 8px 12px; text-align: center; }
+/* 最初の画面の下: 音の注意と「このアプリについて」を同じ形・同じ幅でそろえる */
+.home-foot { display: grid; gap: 8px; margin-top: 32px; }
+.foot-item {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+.home-foot .about { margin-top: 0; padding-top: 0; padding-bottom: 0; } /* summary が44pxあるので上下の余白はそちらで取る */
 
 /* 2段目の見出し（もどる＋題） */
 .pick-head { display: flex; align-items: center; gap: 12px; margin: 8px 0 12px; }

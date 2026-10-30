@@ -63,7 +63,7 @@ function pickBackground() {
 
 // 画面のいちばん下の「背景: 作者『作品名』」。作品ページへのリンクつき
 function bgCredit() {
-  if (!currentBg) return el("span");
+  if (!currentBg || state === "select" || state === "pick") return el("span"); // 最初の2画面は絵を出さない
   return el("p", { class: "bg-credit" }, [
     el("span", { text: "背景: " }),
     el("a", { href: currentBg.url, target: "_blank", rel: "noopener noreferrer", text: `${currentBg.artist}『${currentBg.title}』（${currentBg.date}）` }),
@@ -280,7 +280,9 @@ function topbar() {
     },
   });
   setIconLabel(art, "🖼", "絵を見る");
-  const tools = el("div", { class: "tools" }, currentBg ? [art, button] : [button]);
+  // 最初の2画面は絵を出さないので「絵を見る」も出さない
+  const showsArt = currentBg && state !== "select" && state !== "pick";
+  const tools = el("div", { class: "tools" }, showsArt ? [art, button] : [button]);
   return el("div", { class: "topbar" }, [brand, tools]);
 }
 
@@ -340,8 +342,10 @@ function renderSelect() {
     ]),
   ]));
 
-  // 音が鳴ることを先に知らせる（電車の中などで驚かないように）
-  app.appendChild(el("p", { class: "sound-note", text: soundNote() }));
+  // 画面の下に、音の注意と「このアプリについて」を同じ形でそろえて置く（10/31 学習者の希望）
+  // 音の注意は、電車の中などで驚かないように先に知らせるため
+  const foot = el("div", { class: "home-foot" }, [el("p", { class: "foot-item sound-note", text: soundNote() })]);
+  app.appendChild(foot);
 
   // このアプリについて（10/30 公開の準備で追加。レクチャー/フェーズ6-1）。開いたときだけ読めるよう details にする
   const about = [
@@ -352,7 +356,7 @@ function renderSelect() {
     "画面の作りは、デジタル庁デザインシステムのガイドライン（https://design.digital.go.jp/dads/）を参考にしました。効果音はこのアプリのために合成したものです。",
     "背景の絵は、メトロポリタン美術館のオープンアクセス（CC0。著作権の切れた作品の画像を誰でも使える仕組み）の画像を、小さくして使っています。作品名は画面の下に出します。",
   ];
-  app.appendChild(el("details", { class: "about" }, [
+  foot.appendChild(el("details", { class: "foot-item about" }, [
     el("summary", { text: "このアプリについて" }),
     ...about.map(t => el("p", { text: t })),
   ]));
