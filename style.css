@@ -1,26 +1,40 @@
-/* 色はここにまとめる（あとで変えやすいように） */
+/* 美術史クイズ v2 の見た目（10/31）
+   考え方はデジタル庁デザインシステムのガイドライン（https://design.digital.go.jp/dads/）を参考にした:
+   本文16px以上・行の高さ1.7・押せる所は44px以上・色だけで伝えない・主ボタンは1画面に1つ・やめるは左、進むは右 */
+
+/* 色はここにまとめる（あとで変えやすいように）。文字と地の色の差は WCAG の 4.5:1 以上にしてある */
 :root {
-  --bg: #faf7f2;
+  --bg: #f7f3ec;
   --card: #ffffff;
-  --text: #2b2622;
-  --muted: #6f655c;
-  --accent: #8a3b2e;
-  --border: #e3dbd0;
-  --correct: #2f6b3a;
-  --wrong: #a2352b;
-  --on-accent: #ffffff; /* 主ボタンの文字色（地の色 --accent の上で読める色） */
+  --text: #1c1b1f;
+  --muted: #4f4b55;
+  --border: #ddd5c8;
+  --accent: #7a2337;      /* 主ボタン・リンク（ワインレッド＝美術館の壁の色のイメージ） */
+  --accent-soft: #f6e7ea;
+  --on-accent: #ffffff;
+  --gold: #c99a2e;        /* 飾り（細い線や星）だけに使う。文字には使わない */
+  --correct: #1e6b38;
+  --correct-bg: #e3f3e8;
+  --wrong: #a3261d;
+  --wrong-bg: #fbe9e7;
+  --shadow: 0 2px 0 #ddd5c8;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #1d1a17;
-    --card: #282420;
-    --text: #efe8de;
-    --muted: #a99d90;
-    --accent: #e08a72;
-    --border: #3d3731;
-    --correct: #7fc28b;
-    --wrong: #f08a7e;
-    --on-accent: #1d1a17; /* 明るい地には暗い文字（白だと読みにくい） */
+    --bg: #17151a;
+    --card: #232128;
+    --text: #f3f0ea;
+    --muted: #c3beb6;
+    --border: #3b3842;
+    --accent: #f29bb0;
+    --accent-soft: #3a2730;
+    --on-accent: #17151a;  /* 明るい地には暗い文字（白だと読みにくい） */
+    --gold: #e2bd62;
+    --correct: #8ad9a2;
+    --correct-bg: #183324;
+    --wrong: #ff9b90;
+    --wrong-bg: #3c1d1a;
+    --shadow: 0 2px 0 #0d0c10;
   }
 }
 
@@ -30,80 +44,285 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+  font-family: "Noto Sans JP", system-ui, "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+  font-size: 16px;
   line-height: 1.7;
+  letter-spacing: 0.02em;
 }
 
 main {
   max-width: 640px;
   margin: 0 auto;
-  padding: 24px 16px 48px;
+  padding: 16px 16px 48px;
 }
 
-h1 { font-size: 1.6rem; margin: 0 0 4px; }
-h2 { font-size: 1.15rem; margin: 0 0 16px; }
-h2.section { margin: 32px 0 0; } /* 選択画面の「ジャンルで選ぶ」見出し */
-.muted { color: var(--muted); font-size: 0.9rem; }
+h1, h2, h3 { line-height: 1.4; letter-spacing: 0.01em; }
+p { margin: 0 0 12px; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; } /* 14px は出典など付け足しの情報だけ（ガイドラインの下限） */
 
+/* ---- 上の帯（タイトル・音のボタン） ---- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.brand { font-weight: 700; font-size: 18px; margin: 0; }
+.brand .mark { color: var(--gold); margin-right: 6px; }
+
+/* ---- タイトル画面の見出し ---- */
+.hero {
+  text-align: center;
+  padding: 24px 8px 8px;
+}
+.hero h1 { font-size: 32px; margin: 0 0 8px; }
+.hero .frame {   /* 額縁風の飾り */
+  display: inline-block;
+  padding: 10px 22px;
+  border: 3px double var(--gold);
+  border-radius: 6px;
+  background: var(--card);
+}
+.hero p { margin: 12px 0 0; color: var(--muted); }
+
+.section-title { font-size: 20px; margin: 28px 0 8px; }
+
+/* ---- カード ---- */
 .card {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 20px;
-  margin: 16px 0;
+  margin: 12px 0;
 }
 
+/* ---- ボタンの共通 ---- */
 button {
   font: inherit;
+  letter-spacing: inherit;
   cursor: pointer;
-  border-radius: 10px;
-  min-height: 44px; /* スマホで指で押しやすい大きさ */
+  border-radius: 12px;
+  min-height: 48px; /* 指で押しやすい大きさ（44px以上） */
 }
 /* キーボードで操作したとき、いまどこにいるかを見せる */
-button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+button:focus-visible, a:focus-visible, summary:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
 
-/* 区分ボタン・選択肢ボタン */
-.choice {
+/* 主ボタン（1画面に1つ）: 塗り */
+.primary {
+  padding: 12px 28px;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 2px solid var(--accent);
+  font-weight: 700;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.25);
+}
+.primary:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25); }
+/* 二番目のボタン: 枠線 */
+.secondary {
+  padding: 12px 20px;
+  background: var(--card);
+  color: var(--accent);
+  border: 2px solid var(--accent);
+  font-weight: 700;
+}
+/* 中断（やめる）: 下線つきの文字ボタン */
+.tertiary {
+  padding: 12px 4px;
+  background: transparent;
+  color: var(--muted);
+  border: none;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.icon-button {
+  padding: 8px 12px;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-size: 15px;
+}
+/* やめるは左、進むは右 */
+.row { display: flex; gap: 12px; justify-content: space-between; align-items: center; margin-top: 16px; }
+.row .primary { margin-left: auto; }
+.row.sticky {
+  position: sticky;
+  bottom: 0;
+  background: var(--bg);
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+
+/* ---- 区分・ジャンルのボタン ---- */
+.menu { display: grid; gap: 10px; }
+.menu-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
   width: 100%;
   text-align: left;
-  padding: 12px 16px;
-  margin: 8px 0;
+  padding: 14px 16px;
   background: var(--card);
   color: var(--text);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+  font-weight: 700;
 }
-/* マウスのある機器だけ。スマホでは押したあとも枠が残り、次の問題で選ばれているように見えるため */
-@media (hover: hover) {
-  .choice:hover:not(:disabled) { border-color: var(--accent); }
-}
-.choice:disabled { cursor: default; }
-.choice .count { flex-shrink: 0; color: var(--muted); } /* 長い区分名でも「◯問」がつぶれない */
-
-/* 「次へ」などの主ボタン */
-.primary {
-  padding: 10px 24px;
-  background: var(--accent);
-  color: var(--on-accent);
-  border: none;
-}
-.secondary {
-  padding: 10px 16px;
-  background: transparent;
+.menu-item .count {
+  flex-shrink: 0;
+  font-weight: 400;
+  font-size: 14px;
   color: var(--muted);
-  border: 1px solid var(--border);
+  background: var(--bg);
+  border-radius: 999px;
+  padding: 2px 10px;
 }
-.row { display: flex; gap: 8px; justify-content: space-between; align-items: center; margin-top: 16px; }
+.genres { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+/* マウスのある機器だけ。スマホでは押したあとも枠が残り、選ばれているように見えるため */
+@media (hover: hover) {
+  .menu-item:hover, .choice:hover:not(:disabled) { border-color: var(--accent); }
+}
+.menu-item:active, .choice:active:not(:disabled) { transform: translateY(2px); box-shadow: none; }
 
-.result-correct { color: var(--correct); font-weight: bold; font-size: 1.2rem; }
-.result-wrong { color: var(--wrong); font-weight: bold; font-size: 1.2rem; }
+/* ---- 出題画面 ---- */
+.quiz-head { display: flex; align-items: center; gap: 12px; margin: 8px 0 4px; }
+.progress {
+  flex: 1;
+  height: 14px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  background: var(--correct);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+.counter { font-size: 14px; color: var(--muted); white-space: nowrap; }
+.streak {   /* 連続正解のバッジ */
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 2px 12px;
+  margin: 4px 0 0;
+}
 
-.sources { font-size: 0.85rem; color: var(--muted); padding-left: 1.2em; }
-.sources a { color: var(--accent); word-break: break-all; }
+.question { font-size: 22px; margin: 16px 0 16px; }
 
-.about { margin-top: 32px; } /* 選択画面のいちばん下の「このアプリについて」 */
-.about summary { cursor: pointer; color: var(--muted); }
+.choices { display: grid; gap: 10px; }
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  background: var(--card);
+  color: var(--text);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.choice .key {   /* A〜D の記号 */
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--muted);
+}
+.choice .mark { margin-left: auto; font-weight: 700; flex-shrink: 0; }
+.choice:disabled { cursor: default; color: var(--text); }
+/* 答えたあと: 色だけでなく「✓ 正解」「✕ あなたの答え」の文字でも示す */
+.choice.is-correct { border-color: var(--correct); background: var(--correct-bg); }
+.choice.is-correct .key { border-color: var(--correct); color: var(--correct); }
+.choice.is-correct .mark { color: var(--correct); }
+.choice.is-wrong { border-color: var(--wrong); background: var(--wrong-bg); }
+.choice.is-wrong .key { border-color: var(--wrong); color: var(--wrong); }
+.choice.is-wrong .mark { color: var(--wrong); }
+.choice.is-dim { opacity: 0.6; }
+
+/* ---- 正誤のパネル ---- */
+.feedback {
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin: 16px 0 0;
+  border: 2px solid;
+}
+.feedback.ok { background: var(--correct-bg); border-color: var(--correct); }
+.feedback.ng { background: var(--wrong-bg); border-color: var(--wrong); }
+.verdict { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 700; margin: 0 0 8px; }
+.feedback.ok .verdict { color: var(--correct); }
+.feedback.ng .verdict { color: var(--wrong); }
+.verdict .badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--card);
+  font-size: 20px;
+}
+.feedback.ok .badge { background: var(--correct); }
+.feedback.ng .badge { background: var(--wrong); }
+.feedback .answer-line { font-weight: 700; }
+.explanation { background: var(--card); border-radius: 12px; padding: 12px 14px; margin: 12px 0 0; }
+
+.sources { font-size: 14px; color: var(--muted); padding-left: 1.2em; margin: 12px 0 0; }
+.sources a { color: var(--accent); word-break: break-all; text-underline-offset: 3px; }
+
+/* ---- 結果画面 ---- */
+.result { text-align: center; padding: 28px 20px; }
+.result .tier-icon { font-size: 56px; line-height: 1; margin: 0 0 8px; }
+.result .tier-title { font-size: 28px; margin: 0 0 4px; }
+.score { font-size: 48px; font-weight: 700; line-height: 1.2; margin: 12px 0 4px; }
+.score small { font-size: 20px; color: var(--muted); font-weight: 400; }
+.result.tier-3 { border: 3px double var(--gold); }
+.result.tier-3 .score { color: var(--correct); }
+.mistakes-title { font-size: 20px; margin: 24px 0 8px; }
 .mistake { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 12px; }
+.mistake p { margin: 0 0 4px; }
+
+/* ---- このアプリについて ---- */
+.about { margin-top: 32px; }
+.about summary { cursor: pointer; color: var(--muted); min-height: 44px; display: flex; align-items: center; }
+.about p { font-size: 14px; color: var(--muted); }
+
+/* ---- 動き（動きを減らす設定の人には出さない） ---- */
+@media (prefers-reduced-motion: no-preference) {
+  .pop { animation: pop 0.35s ease-out; }
+  .shake { animation: shake 0.4s ease-in-out; }
+  .rise { animation: rise 0.3s ease-out; }
+  .bounce { animation: bounce 0.9s ease-out; }
+}
+@keyframes pop { 0% { transform: scale(0.9); } 60% { transform: scale(1.04); } 100% { transform: scale(1); } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes bounce { 0% { transform: scale(0.3); } 50% { transform: scale(1.15); } 70% { transform: scale(0.95); } 100% { transform: scale(1); } }
+
+/* 紙吹雪（満点〜8割のときだけ。動きを減らす設定の人には出さない） */
+.confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+.confetti i {
+  position: absolute;
+  top: -12px;
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  animation: fall 2.4s linear forwards;
+}
+@keyframes fall { to { transform: translateY(105vh) rotate(720deg); opacity: 0.9; } }
+@media (prefers-reduced-motion: reduce) { .confetti { display: none; } }
