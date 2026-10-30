@@ -236,6 +236,7 @@ function render() {
   app.appendChild(topbar());
   switch (state) {
     case "select": renderSelect(); break;
+    case "pick": renderPick(); break;
     case "question":
     case "answer": renderQuestion(); break;
     case "result": renderResult(); break;
@@ -290,53 +291,57 @@ function menuButton(label, count, onclick) {
   ]);
 }
 
-let selectTab = "era"; // 選択画面のタブ（"era" 時代 / "genre" ジャンル）
+let pickType = "era"; // 2段目の画面で出す一覧（"era" 時代 / "genre" ジャンル）
+
+// 1段目 → 2段目（10/31 学習者「ボタンが多い。まず時代かジャンルかの2つで選び、次で選択肢を出す」）
+function openPick(type) {
+  pickType = type;
+  state = "pick";
+  render();
+}
+function backToSelect() {
+  state = "select";
+  render();
+}
 
 function soundNote() {
   return soundOn ? "♪ 正解・不正解で効果音が鳴ります。右上の「音あり」で消せます。"
     : "♪ いまは音なしです。右上の「音なし」を押すと効果音が鳴ります。";
 }
 
+function availableGenres() {
+  return GENRES.filter(g => questionsOf(GENRE_KEY + g).length >= GENRE_MIN);
+}
+
+// 1段目: 「時代で選ぶ」「ジャンルで選ぶ」の2つだけ（10/31）
 function renderSelect() {
-  // 10/31: 初めての人が迷わないよう、主ボタン「すぐに始める」を1つだけ置く（デジタル庁: 主ボタンは1画面に1つ）
   app.appendChild(el("div", { class: "hero" }, [
     el("div", { class: "frame" }, [el("h1", { text: "美術史クイズ" })]),
     el("p", { text: "4択で答える美術史のクイズ。1回10問、1問ごとに解説と出典つき。" }),
-    el("div", { class: "start" }, [
-      el("button", { class: "primary big", onclick: () => startQuiz(ALL), text: "すぐに始める" }),
-      el("p", { class: "start-note", text: "全時代からランダムに10問" }),
-    ]),
-    // 音が鳴ることを先に知らせる（電車の中などで驚かないように）
-    el("p", { class: "sound-note", text: soundNote() }),
   ]));
 
-  // 選んで始める: 時代とジャンルをタブで切り替える（22個のボタンが一度に並ぶと選びにくいため）
-  app.appendChild(el("h2", { class: "section-title", text: "選んで始める" }));
-  const genres = GENRES.filter(g => questionsOf(GENRE_KEY + g).length >= GENRE_MIN);
-  const tabs = [["era", "時代で選ぶ"], ["genre", "ジャンルで選ぶ"]];
-  app.appendChild(el("div", { class: "tabs", role: "tablist" }, tabs.map(([id, label]) =>
-    el("button", {
-      class: "tab", role: "tab", "aria-selected": String(selectTab === id),
-      onclick: () => { selectTab = id; render(); },
-      text: label,
-    }))));
+  const eraCount = ERAS.filter(e => questionsOf(e.id).length > 0).length;
+  app.appendChild(el("div", { class: "choose-way" }, [
+    el("button", { class: "way", onclick: () => openPick("era") }, [
+      el("span", { class: "way-icon", "aria-hidden": "true", text: "🏛" }),
+      el("span", { class: "way-text" }, [
+        el("span", { class: "way-title", text: "時代で選ぶ" }),
+        el("span", { class: "way-sub", text: `14世紀から第二次大戦後まで ${eraCount}つの時代` }),
+      ]),
+      el("span", { class: "way-arrow", "aria-hidden": "true", text: "›" }),
+    ]),
+    el("button", { class: "way", onclick: () => openPick("genre") }, [
+      el("span", { class: "way-icon", "aria-hidden": "true", text: "🎨" }),
+      el("span", { class: "way-text" }, [
+        el("span", { class: "way-title", text: "ジャンルで選ぶ" }),
+        el("span", { class: "way-sub", text: `印象派・浮世絵など ${availableGenres().length}種類` }),
+      ]),
+      el("span", { class: "way-arrow", "aria-hidden": "true", text: "›" }),
+    ]),
+  ]));
 
-  if (selectTab === "era") {
-    const eraMenu = el("div", { class: "menu", role: "tabpanel" });
-    for (const e of [...ERAS, { id: ALL, label: "全時代ミックス" }]) {
-      const count = questionsOf(e.id).length;
-      if (count === 0) continue; // 0問の区分はボタンを出さない（設計3）
-      eraMenu.appendChild(menuButton(e.label, count, () => startQuiz(e.id)));
-    }
-    app.appendChild(eraMenu);
-    app.appendChild(el("p", { class: "muted small", text: "時代区分は、国立西洋美術館の作品紹介の分け方を参考にしました。" }));
-  } else {
-    // ジャンルで選ぶ（出典で様式などが確かめられた問題だけが入る）
-    const genreMenu = el("div", { class: "menu genres", role: "tabpanel" });
-    for (const g of genres) genreMenu.appendChild(menuButton(g, questionsOf(GENRE_KEY + g).length, () => startQuiz(GENRE_KEY + g)));
-    app.appendChild(genreMenu);
-    app.appendChild(el("p", { class: "muted small", text: "ジャンルは、出典の美術館などのページで確かめられた問題にだけ付けています。" }));
-  }
+  // 音が鳴ることを先に知らせる（電車の中などで驚かないように）
+  app.appendChild(el("p", { class: "sound-note", text: soundNote() }));
 
   // このアプリについて（10/30 公開の準備で追加。レクチャー/フェーズ6-1）。開いたときだけ読めるよう details にする
   const about = [
@@ -351,6 +356,31 @@ function renderSelect() {
     el("summary", { text: "このアプリについて" }),
     ...about.map(t => el("p", { text: t })),
   ]));
+}
+
+// 2段目: 選んだ方の一覧。左上の「もどる」で1段目へ
+function renderPick() {
+  app.appendChild(el("div", { class: "pick-head" }, [
+    el("button", { class: "tertiary small-button", onclick: backToSelect, text: "‹ もどる" }),
+    el("h1", { class: "pick-title", text: pickType === "era" ? "時代で選ぶ" : "ジャンルで選ぶ" }),
+  ]));
+
+  if (pickType === "era") {
+    const eraMenu = el("div", { class: "menu" });
+    for (const e of [...ERAS, { id: ALL, label: "全時代ミックス" }]) {
+      const count = questionsOf(e.id).length;
+      if (count === 0) continue; // 0問の区分はボタンを出さない（設計3）
+      eraMenu.appendChild(menuButton(e.label, count, () => startQuiz(e.id)));
+    }
+    app.appendChild(eraMenu);
+    app.appendChild(el("p", { class: "muted small", text: "時代区分は、国立西洋美術館の作品紹介の分け方を参考にしました。" }));
+  } else {
+    // ジャンルで選ぶ（出典で様式などが確かめられた問題だけが入る）
+    const genreMenu = el("div", { class: "menu genres" });
+    for (const g of availableGenres()) genreMenu.appendChild(menuButton(g, questionsOf(GENRE_KEY + g).length, () => startQuiz(GENRE_KEY + g)));
+    app.appendChild(genreMenu);
+    app.appendChild(el("p", { class: "muted small", text: "ジャンルは、出典の美術館などのページで確かめられた問題にだけ付けています。" }));
+  }
 }
 
 // 出題（②）と正誤・解説（③）は同じ画面。③では選択肢に正解・あなたの答えの印を付け、下に解説を出す
