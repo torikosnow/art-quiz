@@ -191,7 +191,7 @@ function buildPictureQuiz(n) {
     if (Math.random() < 0.5) {
       // 「この絵の作者は？」: 絵を1枚見せて、作者を4人から選ぶ
       return {
-        kind: "who", image: w.file,
+        kind: "who", image: w.file, artist: w.artist, // artist: 「この画家を学ぶ」で開く画家（10/31）
         question: "この絵を描いたのは誰でしょう？",
         answer: ARTISTS[w.artist].name,
         wrongChoices: others.map(k => ARTISTS[k].name),
@@ -203,7 +203,7 @@ function buildPictureQuiz(n) {
     const decoys = others.map(k => shuffle(WORKS.filter(x => x.artist === k))[0]);
     const all = [w, ...decoys];
     return {
-      kind: "which",
+      kind: "which", artist: w.artist,
       question: `${ARTISTS[w.artist].name}の作品はどれでしょう？`,
       answer: String(w.id),
       wrongChoices: decoys.map(d => String(d.id)),
@@ -305,6 +305,9 @@ function render() {
     case "question":
     case "answer": renderQuestion(); break;
     case "result": renderResult(); break;
+    case "learnEras": renderLearnEras(); break;       // 美術を学ぶ（learn_view.js。10/31）
+    case "learnArtists": renderLearnArtists(); break;
+    case "learnArtist": renderLearnArtist(); break;
     default: // 想定外の状態（Verilogの default と同じ考え方）
       app.appendChild(el("p", { text: "エラー: 想定外の状態です。ページを読み込み直してください。" }));
   }
@@ -375,9 +378,9 @@ function openHistory() {
   state = "hist";
   render();
 }
-// 最初の画面たち（絵の背景を出さない画面）
+// 最初の画面たち（絵の背景を出さない画面）。学ぶ画面も、作品の絵を画面の中に出すので背景はなし
 function isStartScreen() {
-  return state === "select" || state === "hist" || state === "pick";
+  return state === "select" || state === "hist" || state === "pick" || state.startsWith("learn");
 }
 
 // level（「かんたん」など）は題の上の小さな札にする（題に入れるとスマホで途中から折れたため）
@@ -416,6 +419,8 @@ function renderSelect() {
     ways.push(wayButton("🖼", "絵で当てる", `名画を見て作者を当てる・作者の絵を選ぶ。${artistCount}人の画家`, () => startQuiz(PICTURE), "かんたん"));
   }
   ways.push(wayButton("📚", "美術史に挑戦", "時代やジャンルを選ぶ。1問ごとに解説と出典つき", openHistory, "むずかしい"));
+  // 10/31 学習者「クイズに正答するための勉強も必要」→ 学ぶ入口。来た人の多くはまず遊びたいので3番目（設計書 3章）
+  if (pictureReady()) ways.push(wayButton("📖", "美術を学ぶ", "時代から画家を選んで、作品と解説を見る", openLearn, "まなぶ"));
   app.appendChild(el("div", { class: "choose-way" }, ways));
 
   // 画面の下に、音の注意と「このアプリについて」を同じ形でそろえて置く（10/31 学習者の希望）
@@ -582,7 +587,13 @@ function feedback(q, ok) {
     ]));
   }
   panel.appendChild(list);
+  // 絵で当てるの問題は、その画家の学ぶページへ（10/31。間違えた直後がいちばん覚えやすい）。もどるでこの解説に戻る
+  if (q.artist) panel.appendChild(learnLink(q.artist));
   return panel;
+}
+
+function learnLink(artistKey) {
+  return el("button", { class: "tertiary small-button learn-link", onclick: () => openLearnArtist(artistKey, { fromQuiz: true }), text: "この画家を学ぶ ›" });
 }
 
 function renderResult() {
@@ -626,6 +637,7 @@ function renderResult() {
         el("a", { href: s.url, target: "_blank", rel: "noopener noreferrer", text: s.name }),
       ]))),
     ]));
+    if (h.q.artist) item.appendChild(learnLink(h.q.artist));
     app.appendChild(item);
   });
 
