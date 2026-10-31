@@ -35,10 +35,16 @@ function learnTextOf(key) {
 
 // 「美術史に挑戦」でこの画家が出てくる問題（問題文か解説に名前がある、公開中＝確認済みの問題）
 // LEARN_EXCLUDE: 名前が別の言葉の一部と重なって一致してしまう問題（Claude が全件読んで決めた）
+// 10/31 点検の指摘: 答え（answer）にも名前を探す。短い呼び名（LEARN_ALIASES）も使う。全角・半角の＝はそろえて比べる
 function relatedQuestions(key) {
-  const name = ARTISTS[key].name;
+  const norm = s => String(s).replace(/＝/g, "=");
+  const aliases = (typeof LEARN_ALIASES !== "undefined" && LEARN_ALIASES[key]) || [];
+  const names = [ARTISTS[key].name, ...aliases].map(norm);
   const skip = (typeof LEARN_EXCLUDE !== "undefined" && LEARN_EXCLUDE[key]) || [];
-  return QUESTIONS.filter(q => (q.question + q.explanation).includes(name) && !skip.includes(q.id));
+  return QUESTIONS.filter(q => {
+    const text = norm([q.question, q.answer, q.explanation].join("\n")); // 区切りを入れてつなぐ（つなぎ目をまたいで一致しないように）
+    return names.some(n => text.includes(n)) && !skip.includes(q.id);
+  });
 }
 
 // ---- 遷移 ----
@@ -162,7 +168,8 @@ function renderLearnArtist() {
 
   // この時代のクイズに挑戦（その時代の問題があるときだけ）
   const eraId = eraOfArtist(k);
-  if (questionsOf(eraId).length > 0) {
+  // クイズの途中から来たときは出さない（押すと解いている途中の答えが確認なしで消えるため。10/31 点検の指摘）
+  if (questionsOf(eraId).length > 0 && !learnReturn) {
     app.appendChild(el("div", { class: "row" }, [
       el("button", { class: "primary", onclick: () => startQuiz(eraId), text: "この時代のクイズに挑戦" }),
     ]));
