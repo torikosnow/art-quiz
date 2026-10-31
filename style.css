@@ -535,9 +535,40 @@ button:focus-visible, a:focus-visible, summary:focus-visible {
 .learn-text h2:first-child { margin-top: 0; }
 .learn-text p { line-height: 1.7; }
 /* 絵の一覧: スマホで3列、広い画面で5列くらい */
-.learn-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
-.learn-work { padding: 0; aspect-ratio: 1; background: var(--card); border: 2px solid var(--border); overflow: hidden; min-height: 44px; }
+.learn-gallery { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
+.learn-work { flex: 0 0 140px; height: 140px; padding: 0; background: var(--card); border: 2px solid var(--border); overflow: hidden; scroll-snap-align: start; }
 .learn-work img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .learn-viewer .dialog { max-width: min(92vw, 720px); }
 .learn-viewer .dialog img { width: 100%; max-height: 60vh; object-fit: contain; display: block; margin-bottom: 8px; }
 .learn-related .related-item p { margin: 4px 0; }
+
+/* ---- 11/1 使いやすさ（学習者「スクロールしても戻るボタンがついてくる」「横にバー」） ---- */
+/* もどる（と見出し）を画面の上に固定する。下の内容が透けないよう、地の色をしく */
+.pick-head {
+  position: sticky; top: 0; z-index: 5;
+  flex-wrap: wrap; row-gap: 8px;
+  margin: 0 -16px 12px; padding: 8px 16px;
+  background: var(--bg);
+  box-shadow: 0 1px 0 var(--border);
+}
+/* クイズ中の「やめる」と進み具合も上に固定（背景の名画の上なので、すりガラスの地にする） */
+.quiz-head {
+  position: sticky; top: 0; z-index: 5;
+  margin: 0 -16px 8px; padding: 8px 16px;
+  background: var(--glass);
+  box-shadow: 0 1px 0 var(--border);
+}
+/* 場所へ飛ぶバー: 1行に並べ、入りきらなければ横にスライド */
+.learn-tabs { flex-basis: 100%; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.learn-tabs::-webkit-scrollbar { display: none; }
+.learn-tab {
+  flex: none; min-height: 44px; padding: 8px 16px; border-radius: 999px;
+  background: var(--card); color: var(--text); border: 2px solid var(--border); font-weight: 700; font-size: 15px;
+}
+.learn-tab[aria-current="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+/* 飛んだ先の見出しが、固定した帯に隠れないように止める位置をずらす */
+#learn-sec-text, #learn-sec-works, #learn-sec-related, #learn-sec-quiz { scroll-margin-top: 130px; }
+.swipe-hint { margin: -4px 0 8px; }
+/* 前後の画家 */
+.learn-nav { display: flex; justify-content: space-between; gap: 12px; margin: 24px 0 8px; }
+.learn-nav button { min-height: 44px; max-width: 48%; overflow-wrap: anywhere; }

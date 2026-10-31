@@ -118,7 +118,14 @@ function renderLearnArtist() {
   const a = ARTISTS[k];
   // 上の見出しは時代（どの一覧に戻るかがわかるように）。名前は下のカードに大きく出す（同じ名前が2つ並ばないように）
   const era = ERAS.find(x => x.id === learnEra);
-  app.appendChild(learnHead(era ? era.label.replace(/（.*）$/, "") : "画家", backFromArtist));
+  const head = learnHead(era ? era.label.replace(/（.*）$/, "") : "画家", backFromArtist);
+  app.appendChild(head);
+  // 場所へ飛ぶバー（11/1 学習者「横にバーをつけてスライドできるように」）。上の帯（もどる）と一緒に画面の上に固定する
+  // 飛び先は下で作る各部分の id。ない部分（関連する話が0件など）のボタンは出さない（下で消す）
+  const tabDefs = [["learn-sec-text", "解説"], ["learn-sec-works", "作品"], ["learn-sec-related", "美術史の話"], ["learn-sec-quiz", "クイズ"]];
+  const tabBar = el("nav", { class: "learn-tabs", "aria-label": "このページの中の場所" }, tabDefs.map(([id, label]) =>
+    el("button", { class: "learn-tab", "data-target": id, onclick: () => scrollToSection(id), text: label })));
+  head.appendChild(tabBar);
 
   // 名前・国・生没年（館のデータ）
   const facts = [a.nation, `${a.born}年〜${a.died}年`].filter(Boolean).join("　");
@@ -132,7 +139,7 @@ function renderLearnArtist() {
   // 1分で読める文章（確認に合格したものだけ）
   const t = learnTextOf(k);
   if (t) {
-    app.appendChild(el("section", { class: "card learn-text" }, [
+    app.appendChild(el("section", { class: "card learn-text", id: "learn-sec-text" }, [
       el("h2", { text: "どこの国・いつの人" }), el("p", { text: t.where }),
       el("h2", { text: "どんな絵を描いたか" }), el("p", { text: t.works }),
       el("h2", { text: "見分けるコツ" }), el("p", { text: t.tips }),
@@ -143,12 +150,13 @@ function renderLearnArtist() {
       ]))),
     ]));
   } else {
-    app.appendChild(el("p", { class: "card learn-pending", text: "この画家の解説は準備中です。出典で確かめ終わったものから順に載せます。" }));
+    app.appendChild(el("p", { class: "card learn-pending", id: "learn-sec-text", text: "この画家の解説は準備中です。出典で確かめ終わったものから順に載せます。" }));
   }
 
-  // 絵の一覧（タップで大きく）
+  // 絵の一覧（タップで大きく）。11/1 から横にスライドする1列（20〜40点ある画家でもページが長くなりすぎないように）
   const works = WORKS.filter(w => w.artist === k);
-  app.appendChild(el("h2", { class: "review-title", text: `作品（${works.length}点）` }));
+  app.appendChild(el("h2", { class: "review-title", id: "learn-sec-works", text: `作品（${works.length}点）` }));
+  if (works.length > 2) app.appendChild(el("p", { class: "muted small swipe-hint", text: "横にスライドすると、ほかの作品も見られます ›" }));
   app.appendChild(el("div", { class: "learn-gallery" }, works.map(w =>
     el("button", { class: "learn-work", onclick: () => showWork(w), "aria-label": `${w.title}（${w.date}）を大きく見る` }, [
       el("img", { src: w.file, alt: "", loading: "lazy" }),
@@ -157,7 +165,7 @@ function renderLearnArtist() {
   // 「美術史に挑戦」でこの画家が出てくる解説
   const rel = relatedQuestions(k);
   if (rel.length > 0) {
-    app.appendChild(el("h2", { class: "review-title", text: "「美術史に挑戦」に出てくる話" }));
+    app.appendChild(el("h2", { class: "review-title", id: "learn-sec-related", text: "「美術史に挑戦」に出てくる話" }));
     app.appendChild(el("div", { class: "learn-related" }, rel.map(q => el("section", { class: "review-item related-item" }, [
       el("p", { class: "review-question", text: q.question }),
       el("p", { text: `答え: ${q.answer}` }),
@@ -172,11 +180,51 @@ function renderLearnArtist() {
   const eraId = eraOfArtist(k);
   // クイズの途中から来たときは出さない（押すと解いている途中の答えが確認なしで消えるため。10/31 点検の指摘）
   if (questionsOf(eraId).length > 0 && !learnReturn) {
-    app.appendChild(el("div", { class: "row" }, [
+    app.appendChild(el("div", { class: "row", id: "learn-sec-quiz" }, [
       el("button", { class: "primary", onclick: () => startQuiz(eraId), text: "この時代のクイズに挑戦" }),
     ]));
   }
+
+  // 前後の画家（同じ時代の一覧の順。11/1 続けて読めるように）。クイズから来たときは出さない（もどるでクイズに戻れなくなるため）
+  if (!learnReturn) {
+    const list = artistsOfEra(learnEra);
+    const i = list.indexOf(k);
+    const prev = list[i - 1], next = list[i + 1];
+    app.appendChild(el("div", { class: "learn-nav" }, [
+      prev ? el("button", { class: "secondary", onclick: () => openLearnArtist(prev), text: `‹ 前の画家（${ARTISTS[prev].name}）` }) : el("span"),
+      next ? el("button", { class: "secondary", onclick: () => openLearnArtist(next), text: `次の画家（${ARTISTS[next].name}） ›` }) : el("span"),
+    ]));
+  }
+
+  // 飛び先のない部分のボタンを消す（関連する話が0件、クイズの問題がない時代、クイズから来たとき）
+  for (const b of [...tabBar.children]) if (!document.getElementById(b.dataset.target)) b.remove();
+  markCurrentTab();
 }
+
+// バーのボタンを押したら、その部分へ。上に固定した帯の高さ分ずらして止める（CSS の scroll-margin-top）
+function scrollToSection(id) {
+  const target = document.getElementById(id);
+  if (target) target.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+}
+
+// いま読んでいる部分のボタンを光らせる（帯のすぐ下より上に来た最後の部分）
+function markCurrentTab() {
+  if (state !== "learnArtist") return;
+  const bar = app.querySelector(".learn-tabs");
+  if (!bar) return;
+  // 帯のすぐ下から 40px までに見出しが来たら「その部分にいる」とする（飛んだときの止まり位置 scroll-margin-top より少し下まで見る）
+  const headBottom = app.querySelector(".pick-head").getBoundingClientRect().bottom + 40;
+  let current = bar.children[0];
+  for (const b of bar.children) {
+    const sec = document.getElementById(b.dataset.target);
+    if (sec && sec.getBoundingClientRect().top <= headBottom) current = b;
+  }
+  // いちばん下までスクロールしたら最後のボタン（最後の部分は短くて上まで来ないことがあるため）
+  if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) current = bar.children[bar.children.length - 1];
+  for (const b of bar.children) b.setAttribute("aria-current", b === current ? "true" : "false");
+  current.scrollIntoView({ block: "nearest", inline: "nearest" }); // バーが横にはみ出しているとき、光ったボタンを見える位置へ
+}
+window.addEventListener("scroll", () => markCurrentTab(), { passive: true });
 
 // 絵を大きく見る（題名・年・出典リンクつき）。「閉じる」で戻る
 function showWork(w) {
