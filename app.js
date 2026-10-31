@@ -1,4 +1,4 @@
-// 美術史クイズ v2（10/31 見た目と効果音を作り直した）
+// 美術クイズ v2（10/31 見た目と効果音を作り直した。10/31 学習者の指示で名前を「美術史クイズ」から「美術クイズ」に。絵で当てるが加わり、美術史だけではなくなったため）
 // 画面の流れは設計3（レクチャー/設計3_画面の流れ.md）のステートマシンそのまま。
 //   状態: "select"（①区分選択） → "question"（②出題） → "answer"（③正誤・解説） → "result"（④結果）
 // 見た目の考え方: レクチャー/フェーズ6-2_デザインと効果音.md
@@ -333,7 +333,7 @@ function topbar() {
   setIconLabel(button, soundOn ? "🔊" : "🔇", soundOn ? "音あり" : "音なし");
   // 選択画面は大きな題字があるので、帯のアプリ名は出さない（同じ名前が2つ並ぶため）
   const brand = state === "select" ? el("span") :
-    el("p", { class: "brand" }, [el("span", { class: "mark", "aria-hidden": "true", text: "◆" }), el("span", { text: "美術史クイズ" })]);
+    el("p", { class: "brand" }, [el("span", { class: "mark", "aria-hidden": "true", text: "◆" }), el("span", { text: "美術クイズ" })]);
   // 「絵を見る」: カードを隠して背景の絵だけを見る。もう一度押すと戻る
   const art = el("button", {
     class: "icon-button",
@@ -370,7 +370,7 @@ function backToSelect() {
   state = "select";
   render();
 }
-// 美術史クイズの入口（時代かジャンルか）。一覧の「もどる」もここへ戻る
+// 「美術史に挑戦」の入口（時代かジャンルか）。一覧の「もどる」もここへ戻る
 function openHistory() {
   state = "hist";
   render();
@@ -406,7 +406,7 @@ function availableGenres() {
 // 10/31 学習者「美術史は難しい。絵を見て当てる暗記問題が楽しいかも」→ やさしい入口を先に置く
 function renderSelect() {
   app.appendChild(el("div", { class: "hero" }, [
-    el("div", { class: "frame" }, [el("h1", { text: "美術史クイズ" })]),
+    el("div", { class: "frame" }, [el("h1", { text: "美術クイズ" })]),
     el("p", { text: "名画を見て当てたり、美術史に挑戦したり。4択で1回10問。" }),
   ]));
 
