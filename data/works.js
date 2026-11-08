@@ -90,6 +90,11 @@ const ARTISTS = {
   blake: { name: "ブレイク", nameSrc: "B" },
   hogarth: { name: "ホガース", nameSrc: "H" },
   greco: { name: "エル・グレコ", nameSrc: "G" },
+  // 11/8 足した日本の画家（浮世絵の版画。作品はメトロポリタン美術館のパブリックドメイン画像）。日本語名は館の公式サイトの表記:
+  //   葛飾北斎＝すみだ北斎美術館（墨田区）「北斎について」、歌川広重＝中山道広重美術館（恵那市）のトップページ（初代歌川広重）
+  // factsSrc: 国・生没年の出どころ（書いていなければワシントンのデータ）
+  hokusai: { name: "葛飾北斎", factsSrc: "メトロポリタン美術館" },
+  hiroshige: { name: "歌川広重", factsSrc: "メトロポリタン美術館" },
 };
 
 const WORKS = [
@@ -768,6 +773,38 @@ const WORKS = [
   {"id":231682,"artist":"boudin","title":"Low Tide, Sailboats Run Aground","date":"1885-1890","year":1885,"file":"images/works/n-231682.jpg","url":"https://www.nga.gov/collection/art-object-page.231682.html"}
 ].map(w => ({ ...w, museum: MUSEUM_NGA, accessed: "2026-10-31" }));
 
+// 11/8 学習者「北斎・広重のページを作る」（Claude のおすすめ、学習者が承認）。メトロポリタン美術館の Open Access（Public Domain と表示された作品だけ）
+//   API（collectionapi.metmuseum.org v1.1 の検索 → v1 の作品データ）で isPublicDomain・画像ありを確かめ、館の web-large 画像（長い辺約600px）を保存
+//   題名・年は館のデータのまま（英語）。後摺り（early 20th century）は除いた。1点（56235）は画像が取れなかったので除いた
+const MUSEUM_MET = "メトロポリタン美術館";
+WORKS.push(...[
+  {"id":"m45434","artist":"hokusai","title":"Under the Wave off Kanagawa (Kanagawa oki nami ura), also known as The Great Wave, from the series Thirty-six Views of Mount Fuji (Fugaku sanjūrokkei)","date":"ca. 1830–32","year":1830,"file":"images/works/m-45434.jpg","url":"https://www.metmuseum.org/art/collection/search/45434"},
+  {"id":"m56386","artist":"hokusai","title":"Tatekawa in Honjō (Honjō Tatekawa), from the series Thirty-six Views of Mount Fuji (Fugaku sanjūrokkei)","date":"ca. 1830–32","year":1830,"file":"images/works/m-56386.jpg","url":"https://www.metmuseum.org/art/collection/search/56386"},
+  {"id":"m56132","artist":"hokusai","title":"Ushibori in Hitachi Province (Jōshū Ushibori), from the series Thirty-six Views of Mount Fuji (Fugaku sanjūrokkei)","date":"ca. 1830–32","year":1830,"file":"images/works/m-56132.jpg","url":"https://www.metmuseum.org/art/collection/search/56132"},
+  {"id":"m36490","artist":"hokusai","title":"South Wind, Clear Sky (Gaifū kaisei), also known as Red Fuji, from the series Thirty-six Views of Mount Fuji (Fugaku sanjūrokkei)","date":"ca. 1830–32","year":1830,"file":"images/works/m-36490.jpg","url":"https://www.metmuseum.org/art/collection/search/36490"},
+  {"id":"m56229","artist":"hokusai","title":"Storm below Mount Fuji (Sanka no haku u), from the series Thirty-six Views of Mount Fuji (Fugaku sanjūrokkei)","date":"ca. 1830–32","year":1830,"file":"images/works/m-56229.jpg","url":"https://www.metmuseum.org/art/collection/search/56229"},
+  {"id":"m56216","artist":"hokusai","title":"Noboto Bay (Noboto no ura), from the series Thirty-six Views of Mount Fuji (Fugaku sanjūrokkei)","date":"ca. 1830–32","year":1830,"file":"images/works/m-56216.jpg","url":"https://www.metmuseum.org/art/collection/search/56216"},
+  {"id":"m56389","artist":"hokusai","title":"Lower Meguro (Shimo Meguro), from the series Thirty-six Views of Mount Fuji (Fugaku sanjūrokkei)","date":"ca. 1830–32","year":1830,"file":"images/works/m-56389.jpg","url":"https://www.metmuseum.org/art/collection/search/56389"},
+  {"id":"m54868","artist":"hokusai","title":"Reflection in Lake at Misaka in Kai Province (Kōshū Misaka suimen), from the series Thirty-six Views of Mount Fuji (Fugaku sanjūrokkei)","date":"ca. 1830–32","year":1830,"file":"images/works/m-54868.jpg","url":"https://www.metmuseum.org/art/collection/search/54868"},
+  {"id":"m56686","artist":"hokusai","title":"Fuji—The Tama River, Musashi Province, from the series Thirty-six Views of Mount Fuji (Fugaku sanjūrokkei)","date":"ca. 1830–32","year":1830,"file":"images/works/m-56686.jpg","url":"https://www.metmuseum.org/art/collection/search/56686"},
+  {"id":"m55735","artist":"hokusai","title":"Ejiri in Suruga Province (Sunshū Ejiri), from the series Thirty-six Views of Mount Fuji (Fugaku sanjūrokkei)","date":"ca. 1830–32","year":1830,"file":"images/works/m-55735.jpg","url":"https://www.metmuseum.org/art/collection/search/55735"},
+  {"id":"m55283","artist":"hokusai","title":"Yoshida on the Tōkaidō (Tōkaidō Yoshida), from the series Thirty-six Views of Mount Fuji (Fugaku sanjūrokkei)","date":"ca. 1830–32","year":1830,"file":"images/works/m-55283.jpg","url":"https://www.metmuseum.org/art/collection/search/55283"},
+  {"id":"m55237","artist":"hokusai","title":"Nihonbashi in Edo (Edo Nihonbashi), from the series Thirty-six Views of Mount Fuji (Fugaku sanjūrokkei)","date":"ca. 1830–32","year":1830,"file":"images/works/m-55237.jpg","url":"https://www.metmuseum.org/art/collection/search/55237"},
+  {"id":"m55741","artist":"hokusai","title":"Tsukudajima in Musashi Province (Buyō Tsukudajima), from the series Thirty-six Views of Mount Fuji (Fugaku sanjūrokkei)","date":"ca. 1830–32","year":1830,"file":"images/works/m-55741.jpg","url":"https://www.metmuseum.org/art/collection/search/55741"},
+  {"id":"m56395","artist":"hokusai","title":"Surugadai in Edo (Tōto Sundai), from the series Thirty-six Views of Mount Fuji (Fugaku sanjūrokkei)","date":"ca. 1830–32","year":1830,"file":"images/works/m-56395.jpg","url":"https://www.metmuseum.org/art/collection/search/56395"},
+  {"id":"m57651","artist":"hiroshige","title":"Hatsune Riding Ground, from the series One Hundred Famous Views of Edo (Meisho Edo hyakkei)","date":"1856–58","year":1856,"file":"images/works/m-57651.jpg","url":"https://www.metmuseum.org/art/collection/search/57651"},
+  {"id":"m56689","artist":"hiroshige","title":"Kinryūsan Temple at Asakusa, from the series One Hundred Famous Views of Edo","date":"1856","year":1856,"file":"images/works/m-56689.jpg","url":"https://www.metmuseum.org/art/collection/search/56689"},
+  {"id":"m37093","artist":"hiroshige","title":"Fireworks at Ryōgoku Bridge, from the series One Hundred Famous Views of Edo","date":"1858","year":1858,"file":"images/works/m-37093.jpg","url":"https://www.metmuseum.org/art/collection/search/37093"},
+  {"id":"m56931","artist":"hiroshige","title":"Nihon Embankment at Yoshiwara, from the series One Hundred Famous Views of Edo (Meisho Edo hyakkei, Yoshiwara, Nihonzutsumi)","date":"1857","year":1857,"file":"images/works/m-56931.jpg","url":"https://www.metmuseum.org/art/collection/search/56931"},
+  {"id":"m55433","artist":"hiroshige","title":"Sudden Shower over Shin-Ōhashi Bridge and Atake (Ōhashi Atake no yūdachi), from the series One Hundred Famous Views of Edo (Meisho Edo hyakkei)","date":"1857","year":1857,"file":"images/works/m-55433.jpg","url":"https://www.metmuseum.org/art/collection/search/55433"},
+  {"id":"m55095","artist":"hiroshige","title":"Moon-Viewing Location (Tsuki no Misaki), from the series One Hundred Famous Views of Edo (Meisho Edo Hyakkei)","date":"1857","year":1857,"file":"images/works/m-55095.jpg","url":"https://www.metmuseum.org/art/collection/search/55095"},
+  {"id":"m55733","artist":"hiroshige","title":"Jūmantsubo Plain at Fukagawa Susaki, from the series One Hundred Famous Views of Edo","date":"1856","year":1856,"file":"images/works/m-55733.jpg","url":"https://www.metmuseum.org/art/collection/search/55733"},
+  {"id":"m36542","artist":"hiroshige","title":"Minowa, Kanasugi at Mikawashima, from the series One Hundred Famous Views of Edo (Meisho Edo hyakkei, Minowa Kanasugi, Mikawashima)","date":"1857","year":1857,"file":"images/works/m-36542.jpg","url":"https://www.metmuseum.org/art/collection/search/36542"},
+  {"id":"m36521","artist":"hiroshige","title":"Sudden Shower at Shōno, from the series Fifty-three Stations of the Tōkaidō","date":"1834–35","year":1834,"file":"images/works/m-36521.jpg","url":"https://www.metmuseum.org/art/collection/search/36521"},
+  {"id":"m36971","artist":"hiroshige","title":"Spring Rain at Tsuchiyama, from the series Fifty-three Stations of the Tōkaidō","date":"1834–35","year":1834,"file":"images/works/m-36971.jpg","url":"https://www.metmuseum.org/art/collection/search/36971"},
+  {"id":"m37208","artist":"hiroshige","title":"Hara, Number 14, from the series Fifty-Three Stations of the Tōkaidō Road (Tōkaidō gojūsan tsugi), also known as the Clerical Script Tōkaidō (Reisho Tōkaidō)","date":"1847–52","year":1847,"file":"images/works/m-37208.jpg","url":"https://www.metmuseum.org/art/collection/search/37208"},
+].map(w => ({ ...w, museum: MUSEUM_MET, accessed: "2026-11-08" })));
+
 // ARTIST_FACTS_BEGIN
 // 画家の国・生没年（data\作家データ.tsv から tools\add_artist_facts.ps1 が書く。手で直さない）
 const ARTIST_FACTS = {
@@ -878,6 +915,8 @@ const ARTIST_FACTS = {
   whistler: {"born":1834,"died":1903,"nation":"アメリカ"},
   wilson: {"born":1713,"died":1782,"nation":"イギリス"},
   zurbaran: {"born":1598,"died":1664,"nation":"スペイン"},
+  hokusai: {"born":1760,"died":1849,"nation":"日本"},
+  hiroshige: {"born":1797,"died":1858,"nation":"日本"},
 };
 for (const [k, f] of Object.entries(ARTIST_FACTS)) if (ARTISTS[k]) Object.assign(ARTISTS[k], f);
 // ARTIST_FACTS_END

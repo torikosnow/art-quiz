@@ -133,7 +133,8 @@ function renderLearnArtist() {
     el("p", { class: "learn-name", text: a.name }),
     el("p", { class: "muted", text: facts }),
     // 生年は館によって1年ずれることがある（例 ボッティチェリ: ワシントンは1446年、ロンドンとウフィツィは1445年）。出どころを書く
-    el("p", { class: "muted small", text: `国・生没年: ${MUSEUM_NGA}のデータ` }),
+    // 11/8: 北斎・広重はメトロポリタン美術館のデータ（ARTISTS の factsSrc）。ほかはワシントンのデータ
+    el("p", { class: "muted small", text: `国・生没年: ${a.factsSrc || MUSEUM_NGA}のデータ` }),
   ]));
 
   // 1分で読める文章（確認に合格したものだけ）
