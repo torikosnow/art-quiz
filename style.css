@@ -572,3 +572,32 @@ button:focus-visible, a:focus-visible, summary:focus-visible {
 /* 前後の画家 */
 .learn-nav { display: flex; justify-content: space-between; gap: 12px; margin: 24px 0 8px; }
 .learn-nav button { min-height: 44px; max-width: 48%; overflow-wrap: anywhere; }
+
+/* ---- 人生のロードマップ（11/8。learn_view.js の renderRoadmap） ----
+   箱＝出来事、矢印＝順番（ブロック図）。画家の箱は塗り、世の中の箱は点線で「本人の話ではない」と見分ける */
+.roadmap { --rm-own: var(--accent-soft); --rm-own-line: var(--accent); --rm-world: #fdf1e6; --rm-world-line: #a8561c; --rm-world-text: #6e3510; }
+@media (prefers-color-scheme: dark) { .roadmap { --rm-world: #3a2a1e; --rm-world-line: #e8a46a; --rm-world-text: #f6d9bf; } }
+.roadmap-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; color: var(--muted); margin: 4px 0 12px; }
+.roadmap-swatch { display: inline-block; width: 14px; height: 14px; border-radius: 4px; }
+.roadmap-swatch.own { background: var(--rm-own); border: 2px solid var(--rm-own-line); }
+.roadmap-swatch.world { background: var(--rm-world); border: 2px dashed var(--rm-world-line); margin-left: 8px; }
+.roadmap-flow { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; }
+.roadmap-item { width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center; }
+.roadmap-item[hidden] { display: none; }
+.roadmap-arrow { font-size: 22px; line-height: 1; color: var(--muted); padding: 6px 0; }
+.roadmap-block { width: 100%; text-align: left; display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 12px; font: inherit; cursor: pointer; color: var(--text); }
+.roadmap-block.own { background: var(--rm-own); border: 2px solid var(--rm-own-line); }
+.roadmap-block.world { background: var(--rm-world); border: 2px dashed var(--rm-world-line); color: var(--rm-world-text); }
+.roadmap-when { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--rm-own-line); }
+.roadmap-block.world .roadmap-when { color: var(--rm-world-line); }
+.roadmap-kind { font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; }
+.roadmap-title { font-size: 17px; font-weight: 700; line-height: 1.5; }
+.roadmap-detail { margin: 4px 0 0; font-size: 15px; line-height: 1.7; font-weight: 400; }
+.roadmap-controls { justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 16px; }
+.roadmap-sources { margin-top: 12px; }
+.roadmap-item.pop .roadmap-block { animation: roadmap-pop .42s cubic-bezier(.34, 1.56, .64, 1); }
+.roadmap-item.pop .roadmap-arrow { animation: roadmap-fade .25s ease-out; }
+@keyframes roadmap-pop { from { opacity: 0; transform: translateY(-14px) scale(.6); } to { opacity: 1; transform: none; } }
+@keyframes roadmap-fade { from { opacity: 0; } to { opacity: 1; } }
+#learn-sec-roadmap { scroll-margin-top: 130px; }
+.roadmap-controls .primary { margin-left: 0; }

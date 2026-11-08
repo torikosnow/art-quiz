@@ -122,7 +122,7 @@ function renderLearnArtist() {
   app.appendChild(head);
   // 場所へ飛ぶバー（11/1 学習者「横にバーをつけてスライドできるように」）。上の帯（もどる）と一緒に画面の上に固定する
   // 飛び先は下で作る各部分の id。ない部分（関連する話が0件など）のボタンは出さない（下で消す）
-  const tabDefs = [["learn-sec-text", "解説"], ["learn-sec-works", "作品"], ["learn-sec-related", "美術史の話"], ["learn-sec-quiz", "クイズ"]];
+  const tabDefs = [["learn-sec-text", "解説"], ["learn-sec-roadmap", "年表"], ["learn-sec-works", "作品"], ["learn-sec-related", "美術史の話"], ["learn-sec-quiz", "クイズ"]];
   const tabBar = el("nav", { class: "learn-tabs", "aria-label": "このページの中の場所" }, tabDefs.map(([id, label]) =>
     el("button", { class: "learn-tab", "data-target": id, onclick: () => scrollToSection(id), text: label })));
   head.appendChild(tabBar);
@@ -152,6 +152,10 @@ function renderLearnArtist() {
   } else {
     app.appendChild(el("p", { class: "card learn-pending", id: "learn-sec-text", text: "この画家の解説は準備中です。出典で確かめ終わったものから順に載せます。" }));
   }
+
+  // 人生のロードマップ（11/8 学習者の案。確認に合格した年表があるときだけ）
+  const tl = timelineOf(k);
+  if (tl) app.appendChild(renderRoadmap(tl));
 
   // 絵の一覧（タップで大きく）。11/1 から横にスライドする1列（20〜40点ある画家でもページが長くなりすぎないように）
   const works = WORKS.filter(w => w.artist === k);
@@ -239,4 +243,105 @@ function showWork(w) {
   ]);
   app.appendChild(box);
   close.focus();
+}
+
+// ---- 人生のロードマップ（11/8 学習者の案「どの時代の、どんな出来事の中で、どんな絵を描いたか」） ----
+// 見た目: 年ごとの箱が矢印でつながるブロック図。「次へ」で1つずつポンと現れる（学習者「ポンポンポンって飛んでいく」）
+// 理由: 全部を一度に見せるより「次は何が起きた？」と思いながら読めて、印象に残るため（クイズで答えを先に見せないのと同じ）
+// 世の中の出来事（world）は点線の箱にして、画家本人の話ではないと一目でわかるようにする。
+// 出来事どうしは「並べて置くだけ」。つながり（〜の影響で）は、出典にそう書いてあるときだけ detail に書く（年表の共通指示.md）
+const ROADMAP_KIND = { life: "人生", work: "作品", world: "世の中" };
+
+// 確認に合格した年表（出来事と出典がそろっているものだけ）
+function timelineOf(key) {
+  if (typeof TIMELINE === "undefined") return null;
+  const t = TIMELINE.find(x => x.artist === key);
+  if (!t || !Array.isArray(t.events) || t.events.length === 0 || !Array.isArray(t.sources) || t.sources.length === 0) return null;
+  return t;
+}
+
+function renderRoadmap(tl) {
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const sec = el("section", { class: "card roadmap", id: "learn-sec-roadmap" }, [
+    el("h2", { text: "人生のロードマップ" }),
+    el("p", { class: "muted small", text: "「次へ」を押すと、年の順に出来事が1つずつ出てきます。箱を押すと、くわしい説明が開きます。" }),
+    el("p", { class: "roadmap-legend small" }, [
+      el("span", { class: "roadmap-swatch own", "aria-hidden": "true" }), el("span", { text: "画家の人生と作品" }),
+      el("span", { class: "roadmap-swatch world", "aria-hidden": "true" }), el("span", { text: "世の中の出来事" }),
+    ]),
+  ]);
+
+  // 箱と矢印を交互に並べる。見せる・隠すは hidden（隠れている箱は読み上げもされない）
+  const flow = el("ol", { class: "roadmap-flow", "aria-live": "polite" });
+  const steps = [];
+  tl.events.forEach((ev, i) => {
+    const kind = ROADMAP_KIND[ev.kind] ? ev.kind : "life";
+    const hasDetail = !!(ev.detail && ev.detail.trim());
+    const srcText = "出典 " + (ev.src || []).map(n => `[${n}]`).join("");
+    const detail = el("p", { class: "roadmap-detail", hidden: "" }, [
+      el("span", { text: hasDetail ? ev.detail + " " : "" }),
+      el("span", { class: "muted", text: srcText }),
+    ]);
+    const box = el("button", { class: `roadmap-block ${kind === "world" ? "world" : "own"}`, "aria-expanded": "false" }, [
+      el("span", { class: "roadmap-when" }, [
+        el("span", { text: ev.when }),
+        el("span", { class: "roadmap-kind", text: ROADMAP_KIND[kind] }),
+      ]),
+      el("span", { class: "roadmap-title", text: ev.title }),
+      detail,
+    ]);
+    box.addEventListener("click", () => {
+      const open = box.getAttribute("aria-expanded") === "true";
+      box.setAttribute("aria-expanded", open ? "false" : "true");
+      if (open) detail.setAttribute("hidden", ""); else detail.removeAttribute("hidden");
+    });
+    const item = el("li", { class: "roadmap-item" }, [
+      i > 0 ? el("span", { class: "roadmap-arrow", "aria-hidden": "true", text: "↓" }) : el("span"),
+      box,
+    ]);
+    steps.push(item);
+    flow.appendChild(item);
+  });
+  sec.appendChild(flow);
+
+  // 出典（全部見終わったら出す。番号は箱の「出典 [1]」と対応）
+  const srcList = el("ol", { class: "sources roadmap-sources", hidden: "" }, tl.sources.map(s => el("li", {}, [
+    el("a", { href: s.url, target: "_blank", rel: "noopener noreferrer", text: s.name }),
+    el("span", { text: `（${s.accessed} 閲覧）` }),
+  ])));
+
+  const nextBtn = el("button", { class: "primary" , text: "次へ" });
+  const allBtn = el("button", { class: "secondary", text: "全部見る" });
+  const resetBtn = el("button", { class: "tertiary", text: "最初から" });
+  const counter = el("span", { class: "muted small roadmap-count" });
+  let shown = 0, timer = null;
+
+  function show(n) {
+    shown = Math.max(1, Math.min(n, steps.length));
+    steps.forEach((s, i) => {
+      const was = !s.hidden;
+      if (i < shown) { s.hidden = false; if (!was && !reduce) { s.classList.remove("pop"); void s.offsetWidth; s.classList.add("pop"); } }
+      else s.hidden = true;
+    });
+    const done = shown >= steps.length;
+    counter.textContent = `${shown} / ${steps.length}`;
+    nextBtn.textContent = done ? "おわり" : "次へ";
+    if (done) srcList.removeAttribute("hidden"); else srcList.setAttribute("hidden", "");
+  }
+  nextBtn.addEventListener("click", () => {
+    if (shown >= steps.length) return;
+    show(shown + 1);
+    steps[shown - 1].scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" });
+  });
+  allBtn.addEventListener("click", () => {
+    clearInterval(timer);
+    if (reduce) { show(steps.length); return; }
+    timer = setInterval(() => { if (shown >= steps.length) { clearInterval(timer); return; } show(shown + 1); }, 320);
+  });
+  resetBtn.addEventListener("click", () => { clearInterval(timer); show(1); });
+
+  sec.appendChild(el("div", { class: "row roadmap-controls" }, [nextBtn, allBtn, resetBtn, counter]));
+  sec.appendChild(srcList);
+  show(1);
+  return sec;
 }
