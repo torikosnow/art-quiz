@@ -805,6 +805,41 @@ WORKS.push(...[
   {"id":"m37208","artist":"hiroshige","title":"Hara, Number 14, from the series Fifty-Three Stations of the Tōkaidō Road (Tōkaidō gojūsan tsugi), also known as the Clerical Script Tōkaidō (Reisho Tōkaidō)","date":"1847–52","year":1847,"file":"images/works/m-37208.jpg","url":"https://www.metmuseum.org/art/collection/search/37208"},
 ].map(w => ({ ...w, museum: MUSEUM_MET, accessed: "2026-11-08" })));
 
+// 11/8 学習者「この画家ならこの絵を増やす」（ダウンロードは学習者が承認）。規約は 調査メモ/2026-11-08_美術館の画像利用規約.md
+//   クリーブランド美術館 Open Access: API で share_license_status が CC0・作者が本人だけ（workshop・follower・circle を除く）を確かめた。大人の裸体・死や暴力が主題のものは除いた
+//   アムステルダム国立美術館: 作品データの権利表示が Public Domain Mark / CC0 であることを確かめ、IIIF（長い辺800px）で取得
+const MUSEUM_CMA = "クリーブランド美術館";
+const MUSEUM_RIJKS = "アムステルダム国立美術館";
+WORKS.push(...[
+  {"id":"c141549","artist":"velazquez","title":"Portrait of the Jester Calabazas","date":"c. 1631–32","year":1631,"file":"images/works/c-141549.jpg","url":"https://clevelandart.org/art/1965.15"},
+  {"id":"c146752","artist":"millet","title":"Return from the Fields","date":"c. 1846–47","year":1846,"file":"images/works/c-146752.jpg","url":"https://clevelandart.org/art/1972.19"},
+  {"id":"c150062","artist":"millet","title":"Monsieur Martin","date":"1840","year":1840,"file":"images/works/c-150062.jpg","url":"https://clevelandart.org/art/1980.270"},
+  {"id":"c130163","artist":"david","title":"Young Woman with a Turban","date":"c. 1780","year":1775,"file":"images/works/c-130163.jpg","url":"https://clevelandart.org/art/1952.542"},
+  {"id":"c150389","artist":"poussin","title":"The Holy Family on the Steps","date":"1648","year":1648,"file":"images/works/c-150389.jpg","url":"https://clevelandart.org/art/1981.18"},
+  {"id":"c130392","artist":"poussin","title":"The Return of the Holy Family to Nazareth","date":"c. 1627","year":1622,"file":"images/works/c-130392.jpg","url":"https://clevelandart.org/art/1953.156"},
+  {"id":"c125247","artist":"rubens","title":"Portrait of Isabella Brant","date":"c. 1620–25","year":1620,"file":"images/works/c-125247.jpg","url":"https://clevelandart.org/art/1947.207"},
+  {"id":"c136217","artist":"zurbaran","title":"Christ and the Virgin in the House at Nazareth","date":"c. 1640","year":1635,"file":"images/works/c-136217.jpg","url":"https://clevelandart.org/art/1960.117"},
+  {"id":"c108541","artist":"greco","title":"The Holy Family with Mary Magdalen","date":"c. 1590–95","year":1590,"file":"images/works/c-108541.jpg","url":"https://clevelandart.org/art/1926.247"},
+  {"id":"c142298","artist":"ingres","title":"Antiochus and Stratonice","date":"c. 1838","year":1833,"file":"images/works/c-142298.jpg","url":"https://clevelandart.org/art/1966.13"},
+  {"id":"c109507","artist":"veronese","title":"Portrait of Agostino Barbarigo","date":"after c. 1571","year":1571,"file":"images/works/c-109507.jpg","url":"https://clevelandart.org/art/1928.16"},
+  {"id":"c123490","artist":"goya","title":"Portrait of Don Juan Antonio Cuervo","date":"1819","year":1819,"file":"images/works/c-123490.jpg","url":"https://clevelandart.org/art/1943.90"},
+  {"id":"c144588","artist":"goya","title":"Saint Ambrose","date":"c. 1796–99","year":1796,"file":"images/works/c-144588.jpg","url":"https://clevelandart.org/art/1969.23"},
+  {"id":"c145960","artist":"holbein","title":"Terminus, the Device of Erasmus","date":"c. 1532","year":1527,"file":"images/works/c-145960.jpg","url":"https://clevelandart.org/art/1971.166"}
+].map(w => ({ ...w, museum: MUSEUM_CMA, accessed: "2026-11-08" })));
+WORKS.push(...[
+  {"id":"rSK-A-2344","artist":"vermeer","title":"The Milkmaid","date":"c. 1660","year":1660,"file":"images/works/r-SK-A-2344.jpg","url":"https://www.rijksmuseum.nl/en/collection/SK-A-2344"},
+  {"id":"rSK-A-1595","artist":"vermeer","title":"The Love Letter","date":"c. 1669 - c. 1670","year":1669,"file":"images/works/r-SK-A-1595.jpg","url":"https://www.rijksmuseum.nl/en/collection/SK-A-1595"},
+  {"id":"rSK-A-2860","artist":"vermeer","title":"View of Houses in Delft, Known as ‘The Little Street’","date":"c. 1658","year":1658,"file":"images/works/r-SK-A-2860.jpg","url":"https://www.rijksmuseum.nl/en/collection/SK-A-2860"},
+  {"id":"rSK-C-251","artist":"vermeer","title":"Woman Reading a Letter","date":"c. 1663","year":1663,"file":"images/works/r-SK-C-251.jpg","url":"https://www.rijksmuseum.nl/en/collection/SK-C-251"},
+  {"id":"rSK-C-5","artist":"rembrandt","title":"The Night Watch Militia Company of District II under the Command of Captain Frans Banninck Cocq","date":"1642","year":1642,"file":"images/works/r-SK-C-5.jpg","url":"https://www.rijksmuseum.nl/en/collection/SK-C-5"},
+  {"id":"rSK-C-216","artist":"rembrandt","title":"Isaac and Rebecca, Known as ‘The Jewish Bride’","date":"c. 1665 - c. 1669","year":1665,"file":"images/works/r-SK-C-216.jpg","url":"https://www.rijksmuseum.nl/en/collection/SK-C-216"},
+  {"id":"rSK-A-4050","artist":"rembrandt","title":"Self-portrait as the Apostle Paul","date":"1661","year":1661,"file":"images/works/r-SK-A-4050.jpg","url":"https://www.rijksmuseum.nl/en/collection/SK-A-4050"},
+  {"id":"rSK-A-135","artist":"hals","title":"The Merry Drinker","date":"c. 1628 - c. 1630","year":1628,"file":"images/works/r-SK-A-135.jpg","url":"https://www.rijksmuseum.nl/en/collection/SK-A-135"},
+  {"id":"rSK-A-3262","artist":"vangogh","title":"Self-portrait","date":"1887","year":1887,"file":"images/works/r-SK-A-3262.jpg","url":"https://www.rijksmuseum.nl/en/collection/SK-A-3262"},
+  {"id":"rSK-A-2963","artist":"goya","title":"Portrait of Don Ramón Satué","date":"1823","year":1823,"file":"images/works/r-SK-A-2963.jpg","url":"https://www.rijksmuseum.nl/en/collection/SK-A-2963"},
+  {"id":"rSK-C-229","artist":"steen","title":"The Merry Family","date":"1668","year":1668,"file":"images/works/r-SK-C-229.jpg","url":"https://www.rijksmuseum.nl/en/collection/SK-C-229"}
+].map(w => ({ ...w, museum: MUSEUM_RIJKS, accessed: "2026-11-08" })));
+
 // ARTIST_FACTS_BEGIN
 // 画家の国・生没年（data\作家データ.tsv から tools\add_artist_facts.ps1 が書く。手で直さない）
 const ARTIST_FACTS = {
