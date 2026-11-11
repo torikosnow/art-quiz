@@ -807,12 +807,12 @@ WORKS.push(...[
 
 // 11/8 学習者「この画家ならこの絵を増やす」（ダウンロードは学習者が承認）。規約は 調査メモ/2026-11-08_美術館の画像利用規約.md
 //   クリーブランド美術館 Open Access: API で share_license_status が CC0・作者が本人だけ（workshop・follower・circle を除く）を確かめた。大人の裸体・死や暴力が主題のものは除いた
+//   11/11: ミレー《Return from the Fields》（1972.19）は胸が出ている人物がいたので外した（11/8 の確認漏れ。カルーセルの表紙を選ぶときに気づいた）。見直しでホルバイン《Terminus》（1971.166、裸の胸像）も外した
 //   アムステルダム国立美術館: 作品データの権利表示が Public Domain Mark / CC0 であることを確かめ、IIIF（長い辺800px）で取得
 const MUSEUM_CMA = "クリーブランド美術館";
 const MUSEUM_RIJKS = "アムステルダム国立美術館";
 WORKS.push(...[
   {"id":"c141549","artist":"velazquez","title":"Portrait of the Jester Calabazas","date":"c. 1631–32","year":1631,"file":"images/works/c-141549.jpg","url":"https://clevelandart.org/art/1965.15"},
-  {"id":"c146752","artist":"millet","title":"Return from the Fields","date":"c. 1846–47","year":1846,"file":"images/works/c-146752.jpg","url":"https://clevelandart.org/art/1972.19"},
   {"id":"c150062","artist":"millet","title":"Monsieur Martin","date":"1840","year":1840,"file":"images/works/c-150062.jpg","url":"https://clevelandart.org/art/1980.270"},
   {"id":"c130163","artist":"david","title":"Young Woman with a Turban","date":"c. 1780","year":1775,"file":"images/works/c-130163.jpg","url":"https://clevelandart.org/art/1952.542"},
   {"id":"c150389","artist":"poussin","title":"The Holy Family on the Steps","date":"1648","year":1648,"file":"images/works/c-150389.jpg","url":"https://clevelandart.org/art/1981.18"},
@@ -824,7 +824,6 @@ WORKS.push(...[
   {"id":"c109507","artist":"veronese","title":"Portrait of Agostino Barbarigo","date":"after c. 1571","year":1571,"file":"images/works/c-109507.jpg","url":"https://clevelandart.org/art/1928.16"},
   {"id":"c123490","artist":"goya","title":"Portrait of Don Juan Antonio Cuervo","date":"1819","year":1819,"file":"images/works/c-123490.jpg","url":"https://clevelandart.org/art/1943.90"},
   {"id":"c144588","artist":"goya","title":"Saint Ambrose","date":"c. 1796–99","year":1796,"file":"images/works/c-144588.jpg","url":"https://clevelandart.org/art/1969.23"},
-  {"id":"c145960","artist":"holbein","title":"Terminus, the Device of Erasmus","date":"c. 1532","year":1527,"file":"images/works/c-145960.jpg","url":"https://clevelandart.org/art/1971.166"}
 ].map(w => ({ ...w, museum: MUSEUM_CMA, accessed: "2026-11-08" })));
 WORKS.push(...[
   {"id":"rSK-A-2344","artist":"vermeer","title":"The Milkmaid","date":"c. 1660","year":1660,"file":"images/works/r-SK-A-2344.jpg","url":"https://www.rijksmuseum.nl/en/collection/SK-A-2344"},
